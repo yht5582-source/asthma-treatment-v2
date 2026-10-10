@@ -1,10 +1,23 @@
-# 氣喘臨床決策工具 · Asthma Clinical Decision Aid
+# 氣喘臨床決策工具 v2 · Asthma Clinical Decision Aid
 
 依 **GINA 2026 Summary Guide for Asthma Management and Prevention** 整理的單頁互動工具，供**醫療專業人員**臨床參考。內容已與原始 PDF **逐項核對**。
 
 介面為繁體中文，關鍵術語附英文。零相依、純靜態 HTML，開啟即用。
 
-**線上版：** https://yht5582-source.github.io/asthma-treatment/
+**線上版：** https://yht5582-source.github.io/asthma-treatment-v2/
+
+> v2 由 [asthma-treatment](https://github.com/yht5582-source/asthma-treatment)（v1）延伸，主要改寫「治療階梯」分頁，呈現方式參考 [asthma](https://yht5582-source.github.io/asthma/) 的治療階梯推導。v1 保持不變。
+
+## v2 更新：治療階梯分頁
+
+- **左輸入、右結果**：左邊輸入年齡層（≥18／12–17／6–11／≤5）、初診或治療中、症狀、控制四題、過去 12 個月發作次數、FEV₁、穩定月數、升階前必查、風險因子；右邊固定顯示結果。
+- **結果卡**：大字 STEP、1–5 階梯條（虛框為原階梯）、判斷依據、提醒（降階做法、換 Track、風險因子）。
+- **處方卡**：Track 1 與 Track 2 並列，含維持／緩解藥與 Table 7 劑量範例；Track 2 區分「ICS-SABA 複方」與「只有 SABA」兩種緩解藥（Figure 7A／7B）。6–11 歲列出 Figure 8 的首選與其他選項。Step 5 依年齡列出可用的 LAMA 與生物製劑。
+- **階梯總覽**：Track 1／Track 2 畫成階梯，標出「建議」與「目前」位置，另一條 Track 的同階選項也會標示；點任一格即可設為目前階梯。初始治療表（Table 3／4）會標出對應的列。
+- **規則**：成人／青少年控制良好 2–3 個月可降階、6–11 歲 3 個月（p.27、p.30）；控制良好但有發作改為「考慮升階或同階換藥」，不自動升階；兒童 Step 1 升階依原用藥（需要時 ICS-formoterol → 低劑量 MART）；Track 1 不計 SABA 那一題（Table 2A）。
+- **決策精靈**的「調整維持治療」改用同一套規則，結果頁可一鍵帶入治療階梯分頁。
+- 可複製病歷摘要、列印。
+- 推導規則集中在 `index.html` 的 `/*ENGINE-START*/ … /*ENGINE-END*/`，以 `node tests.cjs` 測試（62 項）。
 
 ---
 
@@ -65,8 +78,7 @@
 ```
 .
 ├── index.html                        # 完整工具（單一檔案，內嵌 CSS/JS，無外部相依）
-├── docs/
-│   └── asthma-research-notes.md      # 資料底稿：全部條目附出處與原文對照
+├── tests.cjs                         # 治療階梯 engine 規則測試：node tests.cjs
 ├── .nojekyll                         # 停用 GitHub Pages 的 Jekyll 處理
 └── README.md
 ```
@@ -80,8 +92,8 @@
 **本機**：
 
 ```bash
-git clone https://github.com/yht5582-source/asthma-treatment.git
-cd asthma-treatment
+git clone https://github.com/yht5582-source/asthma-treatment-v2.git
+cd asthma-treatment-v2
 open index.html          # macOS
 # 或 xdg-open index.html  # Linux
 ```
@@ -108,7 +120,8 @@ open index.html          # macOS
 | ICS 低／中／高劑量 | Table 6 | ✅ 已核對原文 |
 | AIR / MART 劑量 | Table 7 | ✅ 已核對原文 |
 | **幼兒 ≤5 歲診斷與治療** | — | ⚠️ **Summary Guide 未涵蓋**，內容取自完整報告，工具內已標註，使用前請核對 GINA 完整報告 |
-| **台灣健保給付條件** | — | ⚠️ 未涵蓋，處方前請自行查核 |
+| **台灣健保給付條件** | — | ⚠️ 未涵蓋，處方前請自行查核（可參考 [asthma](https://yht5582-source.github.io/asthma/) 的健保頁） |
+| 其他控制藥選項（≥12 歲各階） | GINA 2026 完整報告 Box 4-6 | ⚠️ Summary Guide 未逐階列出，工具內已標註來源 |
 
 ---
 
@@ -136,4 +149,4 @@ open index.html          # macOS
 
 ---
 
-*最後核對：2026-08-16 · 依據 GINA 2026 Summary Guide（2026 年 7 月版）*
+*最後核對：2026-08-16 · 依據 GINA 2026 Summary Guide（2026 年 7 月版）；v2 治療階梯分頁 2026-10-10 再核對 Table 3、4、7 與 p.26–30*

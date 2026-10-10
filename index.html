@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>氣喘臨床決策工具 · GINA 2026</title>
+<title>氣喘臨床決策工具 v2 · GINA 2026</title>
 <style>
 :root{
   --bg:#f6f8f9; --surface:#ffffff; --line:#dde5e8; --line2:#eef3f5;
@@ -135,6 +135,116 @@ ul.tight li{margin:3px 0}
 footer.foot{border-top:1px solid var(--line);margin:40px auto 0;padding:22px 20px 60px;font-size:12.8px;color:var(--ink3);max-width:1120px}
 @media print{header.top,nav.tabs,.actions,.no-print{display:none!important}
   body{background:#fff;font-size:12px}.card{box-shadow:none;border-color:#ccc}}
+/* ===== treatment ladder (v2): inputs left + sticky result right, staircase overview ===== */
+#v-tx [hidden]{display:none!important}
+.lx-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,450px);gap:18px;align-items:start}
+@media(max-width:1000px){.lx-two{grid-template-columns:minmax(0,1fr)}}
+.lx-stack{display:grid;gap:16px;min-width:0}
+.lx-sticky{position:sticky;top:84px}
+@media(max-width:1000px){.lx-sticky{position:static}}
+.lx-card{padding:18px 20px}
+.lx-h{font-size:16px;margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lx-sample{font-size:12px;color:var(--warn);background:var(--warnl);border-radius:99px;padding:1px 10px;font-weight:600}
+.lx-sub{font-size:12.5px;color:var(--ink2);font-weight:650;margin:14px 0 6px}
+.lx-h+.lx-sub{margin-top:0}
+.lx-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:3px;background:var(--bg);gap:2px;max-width:100%}
+.lx-seg button{appearance:none;border:0;background:transparent;font:inherit;font-size:13.8px;padding:5px 12px;border-radius:7px;color:var(--ink2);cursor:pointer;font-weight:550}
+.lx-seg button:hover{color:var(--ink)}
+.lx-seg button[aria-pressed="true"]{background:var(--surface);color:var(--brand-d);box-shadow:0 0 0 1.5px var(--brand);font-weight:650}
+.lx-check{display:flex;gap:9px;align-items:flex-start;font-size:14.2px;cursor:pointer;padding:3px 0}
+.lx-check input{margin-top:5px;accent-color:var(--brand);flex:none;width:16px;height:16px}
+.lx-row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end}
+.lx-field{display:grid;gap:4px;min-width:0}
+.lx-field>label{font-size:12.5px;color:var(--ink2);font-weight:600}
+.lx-field select,.lx-field input{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:6px 9px;min-width:0;max-width:100%}
+.lx-field input{width:92px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.lx-field select:focus,.lx-field input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(13,127,140,.12)}
+.lx-inl{display:flex;gap:6px;align-items:center}
+.lx-u{font-size:12px;color:var(--ink3);white-space:nowrap}
+.lx-ctl{display:flex;align-items:baseline;gap:10px;margin-top:6px}
+.lx-ctl b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:26px;font-weight:550;line-height:1}
+.lx-pill{display:inline-block;font-size:12px;font-weight:650;border-radius:99px;padding:1px 10px;white-space:nowrap}
+.lx-pill.go{background:var(--okl);color:var(--ok)} .lx-pill.warn{background:var(--warnl);color:var(--warn)}
+.lx-pill.stop{background:var(--badl);color:var(--bad)} .lx-pill.mute{background:var(--line2);color:var(--ink2)}
+.lx-pill.t1{background:var(--t1l);color:var(--brand-d)} .lx-pill.t2{background:var(--t2l);color:#7d4d08}
+.lx-chips{display:flex;flex-wrap:wrap;gap:6px}
+.lx-chip{position:relative}
+.lx-chip input{position:absolute;opacity:0;pointer-events:none}
+.lx-chip span{display:inline-block;font-size:13.3px;border:1px solid var(--line);border-radius:99px;padding:4px 12px;cursor:pointer;background:var(--bg);color:var(--ink2);user-select:none;line-height:1.5}
+.lx-chip input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}
+.lx-chip.bad input:checked+span{background:var(--bad);border-color:var(--bad)}
+.lx-chip input:focus-visible+span{outline:2px solid var(--brand);outline-offset:2px}
+/* result */
+.lx-stephead{display:flex;gap:16px;align-items:center}
+.lx-bigstep{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:42px;line-height:1;font-weight:550;color:var(--brand);min-width:2.6ch}
+.lx-bigstep small{font-size:12px;color:var(--ink3);display:block;margin-bottom:4px;letter-spacing:.12em}
+.lx-bar{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));gap:4px;margin:14px 0 4px}
+.lx-bar i{height:8px;border-radius:4px;background:var(--line2)}
+.lx-bar i.on{background:var(--brand)}
+.lx-bar i.from{background:transparent;box-shadow:inset 0 0 0 2px var(--ink3)}
+.lx-barlab{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));gap:4px;font-size:11.5px;color:var(--ink3);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.lx-why{margin:12px 0 0;padding-left:18px;font-size:13.8px;color:var(--ink2);display:grid;gap:3px}
+.lx-why:empty{display:none}
+.lx-alerts{display:grid;gap:8px;margin-top:12px}
+.lx-alerts:empty{display:none}
+.lx-alert{border-radius:9px;padding:10px 12px;font-size:13.6px;display:grid;gap:3px;border:1px solid}
+.lx-alert strong{font-size:13.8px}
+.lx-alert.warn{background:var(--warnl);border-color:#f0d6a8} .lx-alert.warn strong{color:#7a4c08}
+.lx-alert.stop{background:var(--badl);border-color:#f2c4c1} .lx-alert.stop strong{color:#8c1c16}
+.lx-alert.go{background:var(--okl);border-color:#b9dfd3} .lx-alert.go strong{color:#0d5844}
+.lx-alert.info{background:var(--brand-l);border-color:#bcdfe2} .lx-alert.info strong{color:#0a4d56}
+.lx-alert ul{margin:2px 0 0;padding-left:18px}
+.lx-tracks{display:grid;gap:12px}
+.lx-trk{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.lx-trk.pref{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.lx-trk-h{padding:9px 14px;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;font-weight:660;font-size:14.5px}
+.lx-trk-h.t1{background:var(--t1l);color:var(--brand-d)} .lx-trk-h.t2{background:var(--t2l);color:#7d4d08}
+.lx-trk-b{padding:10px 14px 12px}
+.lx-trk-lab{font-size:12.8px;color:var(--ink3);margin-bottom:2px}
+.lx-kv{display:grid;grid-template-columns:62px minmax(0,1fr);gap:4px 10px;font-size:14px;margin:6px 0 0}
+.lx-kv dt{color:var(--ink3);font-size:12.5px;padding-top:2px}
+.lx-kv dd{margin:0}
+.lx-dose{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.8px;background:#f3f7f8;border:1px solid var(--line2);border-radius:7px;padding:8px 10px;margin-top:8px;line-height:1.6}
+.lx-note{font-size:12.8px;color:var(--ink3);margin:6px 0 0}
+.lx-opt{padding:7px 0 7px 12px;border-left:3px solid var(--line);margin-top:6px;font-size:14px}
+.lx-opt.first{border-left-color:var(--ok)} .lx-opt.alt{border-left-color:var(--brand)} .lx-opt.other{border-left-color:var(--t2)}
+.lx-optsub{font-size:12.5px;color:var(--ink2);font-weight:650;margin:14px 0 2px}
+/* staircase */
+.lx-ovhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px}
+.lx-legend{display:flex;gap:14px;color:var(--ink2)}
+.lx-legend span{display:inline-flex;align-items:center;gap:6px}
+.lg{display:inline-block;width:14px;height:10px;border-radius:3px}
+.lg.rec{background:var(--brand)}
+.lg.cur{border:2px dashed var(--ink3)}
+.lx-track{margin-top:6px}
+.lx-track+.lx-track{margin-top:20px;padding-top:16px;border-top:1px solid var(--line2)}
+.lx-track-h{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}
+.lx-track-h b{font-size:14.5px}
+.lx-stairs{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));gap:8px;align-items:end}
+.lx-rung{appearance:none;font:inherit;text-align:left;color:inherit;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px 11px;font-size:13px;line-height:1.55;position:relative;min-width:0;display:flex;flex-direction:column;gap:4px}
+button.lx-rung{cursor:pointer}
+button.lx-rung:hover{border-color:var(--brand)}
+.lx-rung.t1{border-top:4px solid var(--t1)} .lx-rung.t2{border-top:4px solid var(--t2)} .lx-rung.t5{border-top:4px solid #7a8e95}
+.lx-rung .r-s{font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.lx-rung .r-m{font-weight:640;font-size:13.6px}
+.lx-rung .r-x{color:var(--ink3);font-size:12.3px}
+.lx-rung .tag{position:absolute;top:-10px;right:8px;font-size:11px;font-weight:700;border-radius:99px;padding:0 8px;line-height:18px}
+.lx-rung.rec{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand);background:#f4fbfb}
+.lx-rung.rec .tag.r{background:var(--brand);color:#fff}
+.lx-rung.alt{border-color:#9fd3d8;background:#f7fcfc}
+.lx-rung.alt .tag.a{background:var(--t1l);color:var(--brand-d);border:1px solid #9fd3d8}
+.lx-rung.cur{outline:2px dashed var(--ink3);outline-offset:3px}
+.lx-rung.cur .tag.c{background:var(--surface);color:var(--ink2);border:1px solid var(--ink3)}
+.lx-rung.rec.cur .tag.c{right:auto;left:8px}
+.lx-rel{margin-top:10px;font-size:13.2px;border-radius:8px;padding:7px 12px;background:var(--brand-l);color:#0a4d56}
+.lx-rel.t2{background:var(--t2l);color:#7d4d08}
+@media(min-width:901px){
+  .lx-stairs .h1{min-height:120px}.lx-stairs .h2{min-height:150px}.lx-stairs .h3{min-height:180px}.lx-stairs .h4{min-height:210px}.lx-stairs .h5{min-height:240px}
+}
+@media(max-width:900px){.lx-stairs{grid-template-columns:minmax(0,1fr)!important}.lx-stairs .lx-rung{grid-column:auto!important}}
+tr.lx-hit td{background:var(--brand-l)}
+tr.lx-hit td:first-child{box-shadow:inset 3px 0 0 var(--brand)}
+@media print{.lx-two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.lx-sticky{position:static}#lx-overview{break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -348,15 +458,128 @@ footer.foot{border-top:1px solid var(--line);margin:40px auto 0;padding:22px 20p
 <!-- ============ TREATMENT ============ -->
 <section class="view" id="v-tx" hidden>
   <div class="sec-title">治療階梯 <span class="en">Stepwise treatment</span></div>
-  <div class="sec-sub">所有氣喘病人都需要含 ICS 的治療；<b>不再建議單用 SABA</b>。GINA 2026 Figure 5–8、Table 3–4、Table 7。</div>
+  <div class="sec-sub">輸入病人狀況，直接得到建議的 Step 與 Track 1／Track 2 處方；下方階梯圖同步標出目前與建議的位置。所有氣喘病人都需要含 ICS 的治療，<b>不再建議單用 SABA</b>。GINA 2026 Figure 5–8、Table 2–4、Table 6–7。</div>
 
-  <div class="filterbar no-print">
-    <button class="opt" style="width:auto;padding:8px 16px" data-age="a12">成人／青少年 ≥12 歲</button>
-    <button class="opt" style="width:auto;padding:8px 16px" data-age="a611">兒童 6–11 歲</button>
-    <button class="opt" style="width:auto;padding:8px 16px" data-age="a5">幼兒 ≤5 歲</button>
+  <div class="lx-two">
+    <!-- ===== inputs ===== -->
+    <div class="lx-stack">
+      <div class="card pad lx-card">
+        <h3 class="lx-h">病人資料 <span class="lx-sample" id="lx-sample">示例個案，請改成實際資料</span></h3>
+        <div class="lx-sub">年齡層</div>
+        <div class="lx-seg" id="lx-age" role="group" aria-label="年齡層">
+          <button data-v="adult">≥18 歲成人</button><button data-v="adol">12–17 歲青少年</button><button data-v="child">6–11 歲兒童</button><button data-v="infant">≤5 歲幼兒</button>
+        </div>
+        <div id="lx-ctxwrap">
+          <div class="lx-sub">評估情境</div>
+          <div class="lx-seg" id="lx-ctx" role="group" aria-label="評估情境">
+            <button data-v="init">初診：尚未使用含 ICS 治療</button><button data-v="maint">治療中：評估控制度與調整</button>
+          </div>
+        </div>
+        <p class="small muted" id="lx-infant-note" style="margin:10px 0 0" hidden>≤5 歲不在 2026 Summary Guide 範圍內，本工具不做推導；下方階梯取自 GINA 完整報告，僅供參考，使用前請核對原文。</p>
+      </div>
+
+      <!-- initial -->
+      <div class="card pad lx-card" id="lx-init">
+        <h3 class="lx-h">初診時的症狀 <span class="en" id="lx-init-src">Table 3</span></h3>
+        <div class="lx-sub">白天氣喘症狀</div>
+        <div class="lx-seg" id="lx-days" role="group" aria-label="白天症狀頻率">
+          <button data-v="le2">≤2 天/週</button><button data-v="3" id="lx-days3">約 3 天/週</button><button data-v="most" id="lx-daysmost">≥4 天/週（大多數日子）</button><button data-v="daily">每天</button>
+        </div>
+        <div class="lx-sub">肺功能</div>
+        <div class="lx-seg" id="lx-lf" role="group" aria-label="肺功能">
+          <button data-v="normal">正常</button><button data-v="mild">輕度下降</button><button data-v="low">低下</button><button data-v="na">未測</button>
+        </div>
+        <p class="small muted" style="margin:6px 0 0">GINA 未給「肺功能低下」數值切點，請依臨床判斷；FEV₁ &lt;60% 預測值另屬未來發作的風險因子（Table 2B）。</p>
+        <div class="lx-sub">其他</div>
+        <label class="lx-check"><input type="checkbox" id="lx-night"><span>因氣喘夜間醒來 ≥1 次/週</span></label>
+        <label class="lx-check"><input type="checkbox" id="lx-rexac"><span>近期有急性發作</span></label>
+        <label class="lx-check"><input type="checkbox" id="lx-acute"><span>這次就診正逢急性發作（初次表現即為發作）</span></label>
+      </div>
+
+      <!-- maintenance -->
+      <div class="card pad lx-card" id="lx-maint">
+        <h3 class="lx-h">目前的治療</h3>
+        <div class="lx-row">
+          <div class="lx-field" id="lx-trackwrap"><label for="lx-track">緩解藥策略</label>
+            <select id="lx-track">
+              <option value="t1">Track 1：ICS-formoterol 緩解</option>
+              <option value="t2a">Track 2：ICS-SABA 複方緩解</option>
+              <option value="t2b">Track 2：只有 SABA 緩解</option>
+            </select></div>
+          <div class="lx-field"><label for="lx-step">目前階梯</label><select id="lx-step"></select></div>
+          <div class="lx-field" id="lx-c1wrap"><label for="lx-c1">Step 1 用的是</label>
+            <select id="lx-c1"><option value="icsform">需要時 ICS-formoterol</option><option value="icssaba">需要時 ICS-SABA 複方</option><option value="sep">用 SABA 時另吸 ICS</option></select></div>
+        </div>
+        <p class="small muted" style="margin:6px 0 0">也可以直接點下方階梯圖的格子來設定目前階梯。</p>
+
+        <div class="lx-sub">過去 4 週的症狀控制 <span class="en">Table 2A</span></div>
+        <label class="lx-check"><input type="checkbox" id="lx-c-day"><span>白天症狀每週 &gt;2 次</span></label>
+        <label class="lx-check"><input type="checkbox" id="lx-c-night"><span>曾因氣喘夜間醒來</span></label>
+        <label class="lx-check" id="lx-c-relwrap"><input type="checkbox" id="lx-c-rel"><span>需要 SABA 緩解每週 &gt;2 次 <span class="muted small">（不含運動前預防用）</span></span></label>
+        <p class="small muted" id="lx-c-relna" style="margin:2px 0 4px 26px" hidden>使用 ICS-formoterol 緩解者不計這一題（Table 2A）。</p>
+        <label class="lx-check"><input type="checkbox" id="lx-c-act"><span>活動因氣喘受限</span></label>
+        <div class="lx-ctl"><b id="lx-cn">0</b><span class="lx-pill" id="lx-clvl">控制良好</span></div>
+
+        <div class="lx-sub">急性發作、肺功能與穩定時間</div>
+        <div class="lx-row">
+          <div class="lx-field"><label for="lx-exac">過去 12 個月需 OCS／急診／住院的發作</label><div class="lx-inl"><input type="number" id="lx-exac" min="0" max="20" step="1"><span class="lx-u">次</span></div></div>
+          <div class="lx-field"><label for="lx-fev1">FEV₁</label><div class="lx-inl"><input type="number" id="lx-fev1" min="10" max="150"><span class="lx-u">% 預測值</span></div></div>
+          <div class="lx-field"><label for="lx-stable">已維持控制良好</label><div class="lx-inl"><input type="number" id="lx-stable" min="0" max="60" step="1"><span class="lx-u">個月</span></div></div>
+        </div>
+
+        <div class="lx-sub">升階前必查（未勾選的項目要先處理）</div>
+        <div id="lx-checks"></div>
+      </div>
+
+      <div class="card pad lx-card" id="lx-riskcard">
+        <h3 class="lx-h">未來急性發作的風險因子 <span class="en">Table 2B.1</span></h3>
+        <div class="lx-chips" id="lx-risk"></div>
+        <p class="small muted" style="margin:8px 0 0">風險與症狀控制各自獨立：症狀很少的人仍可能發生嚴重甚至致死性發作。</p>
+      </div>
+    </div>
+
+    <!-- ===== result ===== -->
+    <div class="lx-stack lx-sticky">
+      <div class="card pad lx-card" id="lx-result" aria-live="polite">
+        <div class="lx-stephead">
+          <div class="lx-bigstep"><small>STEP</small><span id="lx-r-step">3</span></div>
+          <div style="min-width:0">
+            <h3 id="lx-r-title" style="font-size:17px">—</h3>
+            <p class="small muted" id="lx-r-sub" style="margin:2px 0 0"></p>
+          </div>
+        </div>
+        <div class="lx-bar" id="lx-r-bar"></div>
+        <div class="lx-barlab" id="lx-r-barlab"></div>
+        <ul class="lx-why" id="lx-r-why"></ul>
+        <div class="lx-alerts" id="lx-r-alerts"></div>
+      </div>
+      <div class="card pad lx-card" id="lx-rx-card">
+        <h3 class="lx-h" id="lx-rx-h">建議處方</h3>
+        <div class="lx-tracks" id="lx-rx"></div>
+        <div id="lx-other"></div>
+      </div>
+      <div class="card pad lx-card no-print">
+        <div class="lx-row" style="justify-content:space-between;align-items:center">
+          <p class="small muted" style="margin:0">可複製為病歷摘要，或列印成一頁。</p>
+          <div class="lx-row"><button class="btn plain" id="lx-copy" style="padding:7px 14px">複製病歷摘要</button><button class="btn" onclick="window.print()" style="padding:7px 14px">列印</button></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div id="txPanels"></div>
+  <!-- ===== staircase overview ===== -->
+  <div class="card pad" style="margin-top:18px" id="lx-overview">
+    <div class="lx-ovhead">
+      <div>
+        <h3 style="font-size:16px;margin-bottom:2px" id="lx-ov-title">階梯總覽</h3>
+        <p class="small muted" style="margin:0" id="lx-ov-sub"></p>
+      </div>
+      <div class="lx-legend small"><span><i class="lg rec"></i>建議</span><span><i class="lg cur"></i>目前</span></div>
+    </div>
+    <div id="lx-stairs"></div>
+  </div>
+
+  <div class="card pad" style="margin-top:16px" id="lx-inittbl"></div>
 
   <div class="card pad" style="margin-top:16px">
     <h3 style="font-size:16px;margin-bottom:10px">調整治療的原則</h3>
@@ -371,9 +594,10 @@ footer.foot{border-top:1px solid var(--line);margin:40px auto 0;padding:22px 20p
         </ul>
       </div>
       <div>
-        <p class="small" style="margin:0 0 6px"><b>降階（控制良好 2–3 個月以上）</b></p>
+        <p class="small" style="margin:0 0 6px"><b>降階（成人／青少年控制良好 2–3 個月；6–11 歲 3 個月以上）</b></p>
         <ul class="tight small">
           <li>選對時機：<b>無呼吸道感染、非旅行期間、非懷孕</b></li>
+          <li>評估發作風險因子（過去發作、急診、低肺功能）</li>
           <li>降階前記錄症狀控制與肺功能、提供書面行動計畫、密切監測並安排回診</li>
           <li>維持性 ICS 劑量<b>減少 25–50%</b>（換較低單位含量或減少吸入次數）</li>
           <li>每次降階後<b>等 2–3 個月</b>確認穩定再降下一階</li>
@@ -774,6 +998,188 @@ document.getElementById('doseSearch').addEventListener('input',e=>{
 });
 </script>
 <script>
+/*ENGINE-START*/
+/* Treatment-ladder rules. Sources: GINA 2026 Summary Guide — Table 2 (control/risk), Table 3/4 (initial),
+   Figure 5–8 (steps), p.26 (Step 5), p.27/p.30 (step-down), Table 6 (ICS doses), Table 7 (AIR/MART doses).
+   "Other controller options" rows come from the GINA 2026 full report (Box 4-6 / 4-12). */
+const LX=(()=>{
+const AGE={adult:'≥18 歲成人',adol:'12–17 歲青少年',child:'6–11 歲兒童',infant:'≤5 歲幼兒'};
+const num=v=>(v===''||v==null||isNaN(+v))?null:+v;
+const isChild=a=>a==='child';
+const isTeenAdult=a=>a==='adult'||a==='adol';
+const trackOf=t=>t==='t1'?'t1':'t2';                 // t2a = ICS-SABA reliever, t2b = SABA-only reliever
+
+/* Table 2A — symptom control, past 4 weeks. The SABA question does not apply to an ICS-formoterol reliever. */
+function control(c,track){
+  const keys=['day','night','act'].concat(track==='t1'?[]:['rel']);
+  const n=keys.filter(k=>c&&c[k]).length;
+  return {n,of:keys.length,level:n===0?'well':n<=2?'partly':'un',label:n===0?'控制良好':n<=2?'部分控制':'未控制'};
+}
+
+/* Table 3 (≥12 y) / Table 4 (6–11 y) — initial treatment row → step */
+function initial(i){
+  const child=isChild(i.age), low=i.lf==='low', why=[];
+  let row;
+  if(i.acute){row=5;why.push('初次表現即為急性發作');}
+  else if((i.days==='daily'||i.night)&&(low||i.recentExac)){
+    row=4;
+    if(i.days==='daily')why.push('每天都有症狀');
+    if(i.night)why.push('夜間醒來 ≥1 次/週');
+    if(low)why.push('肺功能低下');
+    if(i.recentExac)why.push('近期有急性發作');
+  }else if(i.days==='most'||i.days==='daily'||i.night||low){
+    row=3;
+    if(i.days==='daily')why.push('每天都有症狀，但無肺功能低下或近期發作');
+    else if(i.days==='most')why.push(child?'大多數日子有症狀（約 4–5 天/週）':'大多數日子有症狀（≥4 天/週）');
+    if(i.night)why.push('夜間醒來 ≥1 次/週');
+    if(low)why.push('肺功能低下');
+  }else if(i.days==='3'){row=2;why.push(child?'症狀 3–4 天/週':'症狀少於每週 3–5 天');why.push(i.lf==='na'?'肺功能未測':'肺功能正常或僅輕度下降');}
+  else{row=1;why.push('症狀不頻繁（≤2 天/週），無夜間醒來');if(i.lf!=='na')why.push('肺功能未明顯下降');}
+  const cautions=[];
+  if(i.recentExac&&row<4)cautions.push('近期有急性發作：屬未來發作的風險因子，優先選含 ICS 的緩解藥（Track 1），並安排早一點回診');
+  return {row,step:row===5?4:row,why,cautions};
+}
+
+/* Ongoing treatment: Table 2 assessment → step up / stay / step down (p.22, p.27, p.30) */
+function ongoing(m){
+  const child=isChild(m.age), t1=!child&&m.track==='t1';
+  const ctl=control(m.ctl,child?(m.c1==='icsform'&&+m.step===1?'t1':'t2'):m.track);
+  const exac=num(m.exac)||0, fev1=num(m.fev1), stable=num(m.stable)||0;
+  let cur=+m.step; if(t1&&cur<2)cur=2;            // Track 1 Steps 1–2 are one regimen
+  const ck=m.checks||{}, issues=[];
+  if(ck.adh===false)issues.push('未規則使用維持藥');
+  if(ck.tech===false)issues.push('吸入技巧不正確');
+  if(ck.risk===false)issues.push('可調整的風險因子未處理（抽菸、過敏原、空汙、SABA 過度使用）');
+  if(ck.comorb===false)issues.push('共病未處理');
+  if(ck.dx===false)issues.push('診斷尚未確認');
+  const out={ctl,exac,issues,from:cur,to:cur,action:'stay',why:[],cautions:[],next:null};
+  const minStep=t1?2:1, needMonths=child?3:2;
+  if(ctl.level==='well'&&exac===0){
+    if(stable>=needMonths&&cur>minStep){
+      out.action='down';out.to=(t1&&cur===3)?2:cur-1;
+      out.why.push('症狀控制良好已 '+stable+' 個月，過去 12 個月無急性發作');
+      if((fev1!=null&&fev1<60)||m.icu||m.riskN>0)out.cautions.push('有未來發作的風險因子：可以降階，但要密切追蹤並給書面行動計畫');
+    }else if(stable>=needMonths){
+      out.why.push('症狀控制良好，已在最低階梯');
+      out.cautions.push(child?'維持含 ICS 的治療；6–11 歲不可單用 SABA':'不要完全停用 ICS：只用 SABA 會增加急性發作風險');
+    }else{
+      out.why.push('症狀控制良好，但穩定未滿 '+(child?'3':'2–3')+' 個月');
+    }
+  }else{
+    if(ctl.level!=='well')out.why.push('過去 4 週'+ctl.label+'（'+ctl.n+'/'+ctl.of+' 項）');
+    if(exac>0)out.why.push('過去 12 個月急性發作 '+exac+' 次');
+    let next;
+    if(child&&cur===1){
+      next=m.c1==='icsform'?3:2;
+      out.why.push(m.c1==='icsform'?'原用需要時 ICS-formoterol：下一步為低劑量 MART（p.30）':'原用 ICS-SABA／SABA＋ICS：下一步為每日低劑量 ICS');
+    }else next=Math.min(cur+1,5);
+    out.next=next;
+    if(issues.length){
+      out.action='fix';
+      out.why.push('升階前先處理：'+issues.join('、'));
+    }else if(cur>=5){
+      out.action='severe';out.to=5;
+      out.why.push('Step 5 治療下仍控制不良');
+    }else{
+      const strong=ctl.level==='un'||(ctl.level==='partly'&&exac>0);
+      out.action=strong?'up':'consider';out.to=next;
+      if(ctl.level==='well')out.cautions.push('症狀控制良好但仍有發作：檢視維持治療，同階換藥或升階皆可考慮');
+      if(ctl.level==='partly'&&exac===0)out.cautions.push('部分控制：可先在同一階梯換其他選項或換 Track，再決定是否升階');
+    }
+    if(exac>0&&!t1&&!child)out.cautions.push('可改用 Track 1（ICS-formoterol 緩解）同一階梯：比 SABA 緩解更能減少嚴重發作');
+    if(exac>0)out.cautions.push('任何一次需急診或 OCS 的發作都是警訊：檢視治療並給書面行動計畫');
+  }
+  return out;
+}
+
+/* Regimens. ≥12 y Track 1 doses = Table 7; ICS dose ranges = Table 6 */
+const T1={
+  2:{lab:'Steps 1–2 · AIR-only',mt:'無每日維持藥',rel:'需要時低劑量 ICS-formoterol',ex:'Budesonide-formoterol 160/4.5（200/6）或 BDP-formoterol 100/6（DPI 或 pMDI）：需要時 1 吸；數分鐘後未改善可再 1 吸。運動前或接觸過敏原前也可使用。',note:'24 小時內總吸數 >12 吸應就醫。'},
+  3:{lab:'Step 3 · 低劑量 MART',mt:'低劑量 ICS-formoterol 每日維持',rel:'同一支 ICS-formoterol，需要時 1 吸',ex:'早晚各 1 吸（或每日 1 次 1 吸）＋需要時 1 吸。',note:'不含 formoterol 的 ICS-LABA 不能做 MART。24 小時內總吸數 >12 吸應就醫。'},
+  4:{lab:'Step 4 · 中劑量 MART',mt:'中劑量 ICS-formoterol 每日維持',rel:'同一支 ICS-formoterol，需要時 1 吸',ex:'早晚各 2 吸＋需要時 1 吸。',note:'24 小時內總吸數 >12 吸應就醫。'},
+  5:{lab:'Step 5 · MART＋轉介評估',mt:'續用 MART；考慮加 LAMA；轉介做表現型評估；可考慮試用高劑量維持 ICS-formoterol；考慮生物製劑',rel:'同一支 ICS-formoterol，需要時 1 吸',ex:'Step 4–5 MART：早晚各 2 吸＋需要時 1 吸（Table 7）。',note:'高劑量 ICS-LABA 盡可能限制在 3–6 個月。'}
+};
+const T2REL={
+  t2a:'需要時低劑量 ICS-SABA（例：budesonide-salbutamol 80/90 每次 2 吸，24 小時內最多 6 次）',
+  t2b:'需要時 SABA（要特別確認維持 ICS 的順從性，避免變成只用 SABA）'
+};
+const T2={
+  1:{lab:'Step 1 · AIR-only',mt:'無每日維持藥',
+     rel:{t2a:'需要時低劑量 ICS-SABA 複方',t2b:'需要時 SABA，且每次用 SABA 後立即吸一劑低劑量 ICS（分開吸入器）'},
+     ex:{t2a:'Budesonide-salbutamol 80/90 mcg：需要時 2 吸；24 小時內最多 6 次（每次 2 吸）。',t2b:'Salbutamol 1–2 噴，緊接著吸一劑低劑量 ICS。'},
+     note:'相較單用 SABA 緩解，可使嚴重發作風險減少近一半（BATURA）。ICS-SABA 複方不能用作 MART。'},
+  2:{lab:'Step 2 · 每日低劑量 ICS',mt:'每日低劑量 ICS',ex:'Table 6 每日低劑量：budesonide 200–400、fluticasone propionate 100–250、BDP 標準 pMDI 200–500、BDP 超細微粒 100–200、ciclesonide 80–160、fluticasone furoate 100 mcg。',note:'考慮 SABA 緩解前，先評估病人能否規則使用每日 ICS——順從性差者等於只用 SABA。'},
+  3:{lab:'Step 3 · 每日低劑量 ICS-LABA',mt:'每日低劑量 ICS-LABA',ex:'例：fluticasone propionate-salmeterol 100/50 早晚各 1 吸（FP 200 mcg/日）；或 fluticasone furoate-vilanterol 100/25 每日 1 吸。',note:'維持藥與緩解藥若是不同裝置，或換階需要換裝置，務必重新訓練吸入技巧。'},
+  4:{lab:'Step 4 · 每日中劑量 ICS-LABA',mt:'每日中劑量 ICS-LABA',ex:'例：fluticasone propionate-salmeterol 250/50 早晚各 1 吸（FP 500 mcg/日）；或 BDP-formoterol 100/6 早晚各 2 吸（超細微粒 BDP 400 mcg/日）。',note:'Step 2–5 需要兩支吸入器，確認病人分得清維持藥與緩解藥。'},
+  5:{lab:'Step 5 · 附加治療＋轉介評估',mt:'考慮加 LAMA（或改三合一吸入器）；轉介做表現型評估；可考慮試用高劑量維持 ICS-LABA；考慮生物製劑',ex:'',note:'使用非 formoterol LABA 的病人，不可用 ICS-formoterol 當緩解藥。'}
+};
+const KID={
+  1:{pref:['需要時低劑量 ICS-formoterol：budesonide-formoterol 80/4.5（100/6）或 BDP-formoterol 100/6，需要時 1 吸','需要時低劑量 ICS＋SABA（複方，或每次用 SABA 時另吸一劑低劑量 ICS）'],other:[],note:'6–11 歲不可單用 SABA。ICS-formoterol 24 小時內總吸數 >8 吸應就醫。ICS-SABA 複方在兒童的證據很少。'},
+  2:{pref:['每日低劑量 ICS ＋ 需要時 SABA 或 ICS-SABA（Table 6 兒童低劑量：budesonide DPI 100–200、fluticasone propionate 50–100、BDP 標準 pMDI 100–200 mcg/日）'],other:['需要時低劑量 ICS-formoterol','需要時低劑量 ICS-SABA，或每次用 SABA 時併用 ICS','每日 LTRA（注意神經精神不良反應）'],note:''},
+  3:{pref:['中劑量 ICS ＋ 需要時 SABA 或 ICS-SABA','低劑量 ICS-LABA ＋ 需要時 SABA 或 ICS-SABA','低劑量 ICS-formoterol MART：budesonide-formoterol 80/4.5 每日 1 次 1 吸＋需要時 1 吸'],other:['低劑量 ICS＋LTRA（注意神經精神不良反應）'],note:'個別反應不同，可先試其他 Step 3 選項，再考慮 Step 4。'},
+  4:{pref:['中劑量 ICS-LABA ＋ 需要時 SABA','低劑量 ICS-formoterol MART：每日 2 次、每次 1 吸＋需要時 1 吸（劑量為 Step 3 的兩倍，仍屬低每日劑量）','轉介專科'],other:['在 Step 3 的首選控制藥上加 tiotropium 或 LTRA'],note:''},
+  5:{pref:['轉介做表現型評估','考慮更高劑量 ICS-LABA','或加成治療：LAMA（tiotropium）、anti-IgE（omalizumab）、anti-IL4Rα（dupilumab）、anti-IL5（mepolizumab）'],other:[],note:'6–11 歲不建議 Step 5 MART。'}
+};
+/* Other controller options for ≥12 y (full report Box 4-6) */
+const OTHER={
+  2:['每日 LTRA（效果不如 ICS，注意神經精神不良反應）','塵蟎致敏、FEV₁ >70% 預測值：可加 HDM SLIT'],
+  3:['中劑量 ICS','低劑量 ICS＋LTRA','塵蟎致敏、FEV₁ >70% 預測值：可加 HDM SLIT'],
+  4:['加 LAMA 或 LTRA，或改高劑量 ICS','塵蟎致敏、FEV₁ >70% 預測值：可加 HDM SLIT'],
+  5:['成人：專科評估後加 azithromycin','加 LTRA','維持性低劑量 OCS 只作為最後手段（注意副作用）']
+};
+/* Step 5 add-ons by age (p.26) */
+function step5(age){
+  const a=age==='adult'?18:age==='adol'?12:6;
+  const lama=['tiotropium 軟霧吸入器（≥6 歲）'];
+  if(a>=12)lama.push('budesonide-formoterol-glycopyrronium 三合一（≥12 歲）');
+  if(a>=18)lama.push('beclometasone-formoterol-glycopyrronium、fluticasone furoate-vilanterol-umeclidinium、mometasone-indacaterol-glycopyrronium 三合一（≥18 歲）');
+  const bio=['anti-IgE：omalizumab／omalizumab-igec（重度過敏型，≥6 歲）','anti-IL5：mepolizumab（≥6 歲）'];
+  if(a>=12)bio.push('anti-IL5／5R：benralizumab、depemokimab（≥12 歲）');
+  if(a>=18)bio.push('anti-IL5：reslizumab 靜脈注射（≥18 歲）');
+  bio.push('anti-IL4Rα：dupilumab（嗜酸性球型／Type 2 或需維持 OCS，≥6 歲）');
+  if(a>=12)bio.push('anti-TSLP：tezepelumab（≥12 歲）');
+  return {lama,bio};
+}
+function regimen(age,step,track){
+  if(isChild(age)){const r=KID[step];return {child:true,pref:r.pref,other:r.other,note:r.note,s5:step===5?step5(age):null};}
+  const rel2=track==='t2b'?'t2b':'t2a', t=T2[step];
+  const t2={lab:t.lab,mt:t.mt,
+    rel:typeof t.rel==='object'?t.rel[rel2]:T2REL[rel2],
+    ex:typeof t.ex==='object'?t.ex[rel2]:t.ex,note:t.note};
+  return {child:false,t1:T1[Math.max(2,step)],t2,other:OTHER[step]||[],s5:step===5?step5(age):null};
+}
+
+/* Step-down options (p.27 general rules; per-regimen wording from full report Box 4-13) */
+function stepDown(age,track,from){
+  const tail=['選在無呼吸道感染、不旅行、未懷孕的時機','降階前記錄症狀控制與肺功能，給書面行動計畫與足夠藥物，以便必要時恢復原劑量','每次降階後 2–3 個月回診，確認穩定再降下一階'];
+  if(isChild(age))return ['維持性 ICS 劑量減少 25–50%（換較低含量或減少吸入次數）','6–11 歲不可單用 SABA，最低仍維持含 ICS 的治療'].concat(tail);
+  const m={
+    t1:{5:['先停其他附加藥（尤其 OCS），再考慮降 ICS 劑量','生物製劑反應良好者需更長的穩定期'],4:['MART 維持劑量降為低劑量（早晚各 1 吸），續用 ICS-formoterol 緩解'],3:['MART 維持改為每日 1 次','或改為只在需要時使用（AIR-only）']},
+    t2:{5:['先停其他附加藥（尤其 OCS），再考慮降 ICS 劑量','生物製劑反應良好者需更長的穩定期'],4:['續用 ICS-LABA，ICS 劑量減 25–50%（停用 LABA 可能惡化）','或改 ICS-formoterol MART'],3:['ICS-LABA 改為每日 1 次（停用 LABA 可能惡化）','或改為需要時低劑量 ICS-formoterol（Track 1）'],2:['改為需要時低劑量 ICS-SABA，或每次用 SABA 時併用 ICS（Track 2 Step 1）','或改為需要時低劑量 ICS-formoterol（Track 1）','或改為每日 1 次的 ICS 劑型','不要完全停用 ICS']}
+  };
+  return (m[trackOf(track)][from]||[]).concat(['維持性 ICS 劑量減少 25–50%'],tail);
+}
+
+/* Table 2B.1 risk factors (exacerbation count and FEV1 are entered as numbers) */
+const RISK=[['saba','SABA 過度使用（每年 ≥3 支 200 劑裝）'],['ics','ICS 不足：未用、順從性差或技巧錯誤'],['comorb','共病：肥胖、慢性鼻竇炎、GERD、確診食物過敏，或懷孕'],['expo','暴露：致敏過敏原、抽菸、電子菸、空汙'],['psy','重大心理或社經問題'],['lf','肺功能差或支氣管擴張劑反應幅度大'],['t2','Type 2 指標偏高：血液嗜酸性球、FeNO'],['icu','終生曾因氣喘插管或入加護病房']];
+function riskAlerts(set,fev1,exac){
+  const a=[], f=num(fev1), e=num(exac)||0;
+  if(set.has('icu'))a.push(['stop','曾插管或入加護病房','致死性氣喘高風險：給書面行動計畫、密切追蹤，降階要特別保守。']);
+  if(set.has('saba'))a.push(['warn','SABA 過度使用','發作與死亡風險增加；改用含 ICS 的緩解藥（Track 1 優先）。']);
+  const others=RISK.filter(([k])=>set.has(k)&&k!=='icu'&&k!=='saba').map(x=>x[1]);
+  if(f!=null&&f<60&&!set.has('lf'))others.push('FEV₁ '+f+'% 預測值（<60%）');
+  if(e>0)others.push('過去一年 '+e+' 次嚴重發作');
+  if(others.length)a.push(['info','其他風險因子 '+others.length+' 項',others.join('；')]);
+  return a;
+}
+function riskCount(set,fev1,exac){const f=num(fev1);return set.size+((f!=null&&f<60&&!set.has('lf'))?1:0)+((num(exac)||0)>0?1:0);}
+
+return {AGE,num,control,initial,ongoing,regimen,stepDown,step5,RISK,riskAlerts,riskCount,OTHER,T1,T2,KID};
+})();
+if(typeof module!=='undefined')module.exports=LX;
+/*ENGINE-END*/
+</script>
+<script>
 /* ================= regimen data — GINA 2026 Figures 5–8, Table 7 ================= */
 const RX = {
   a12:{
@@ -849,39 +1255,219 @@ const INIT_A611=[
   {q:'初次就診時正處於急性發作', t1:'先處理急性發作，再開始：中劑量維持 ICS-LABA ＋ 需要時 SABA，或低劑量 ICS-formoterol MART', step:4}
 ];
 
-/* ================= treatment reference panels ================= */
-function renderTx(age){
-  const g=RX[age]; let h='';
-  const blocks = age==='a12' ? [['t1',g.t1],['t2',g.t2]] : [['t1',g.t1]];
-  blocks.forEach(([k,tr])=>{
-    h+=`<div class="card pad" style="margin-bottom:16px">
-      <h3 style="font-size:16px;margin-bottom:6px">${tr.name}</h3>
-      <p class="small muted" style="margin:0 0 14px">${tr.note}</p>
-      <div class="ladder">`;
-    tr.steps.forEach((s,i)=>{
-      if(age==='a12'&&i===0&&k==='t1') return;
-      h+=`<div class="rung ${k}"><h5>${s.t}</h5><span class="main">${s.d}</span>
-        ${s.ex!=='—'?`<div class="muted" style="margin-top:5px">${s.ex}</div>`:''}
-        ${s.add&&s.add!=='—'?`<div class="muted" style="margin-top:5px;font-size:12.5px">${s.add}</div>`:''}
-      </div>`;
-    });
-    h+=`</div><div class="note info small" style="margin-top:12px">${g.reliever[k]}</div></div>`;
-  });
-  // initial treatment table
-  const INIT = age==='a12'?INIT_A12 : age==='a611'?INIT_A611 : null;
-  if(INIT){
-    h+=`<div class="card pad" style="margin-bottom:16px"><h3 style="font-size:16px;margin-bottom:4px">建議的<b>初始</b>治療 <span class="en">${age==='a12'?'Table 3':'Table 4'}</span></h3>
-      <p class="small muted" style="margin:0 0 12px">確診後應立即開始最合適的治療，依病人的氣喘病史與目前症狀決定。</p>
-      <div class="tbl-wrap"><table><thead><tr><th style="width:34%">表現的症狀</th><th>${age==='a12'?'首選初始治療（Track 1）':'首選初始治療'}</th>${age==='a12'?'<th>替代初始治療（Track 2）</th>':''}</tr></thead><tbody>`;
-    INIT.forEach(r=>{ h+=`<tr><td>${r.q}</td><td>${r.t1}</td>${age==='a12'?`<td>${r.t2}</td>`:''}</tr>`; });
-    h+=`</tbody></table></div>
-      <div class="note small" style="margin-top:12px">開始治療時同時要做：<b>記錄氣喘診斷的依據</b> · <b>記錄症狀控制與風險因子</b> · 可行時<b>評估肺功能</b> · <b>訓練病人（與家長）正確使用吸入器並檢查技巧</b> · <b>安排回診</b>。</div></div>`;
-  }
-  document.getElementById('txPanels').innerHTML=h;
-  document.querySelectorAll('[data-age]').forEach(b=>b.classList.toggle('sel',b.dataset.age===age));
+/* ================= treatment ladder tab (v2) ================= */
+const LXUI=(function(){
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SAMPLE=()=>({age:'adult',ctx:'maint',
+  init:{days:'most',lf:'mild',night:true,recentExac:false,acute:false},
+  m:{track:'t2a',step:3,c1:'icsform',ctl:{day:true,night:true,rel:true,act:false},exac:'1',fev1:'68',stable:'0',
+     checks:{adh:true,tech:true,risk:true,comorb:true,dx:true}},
+  risk:new Set(['expo'])});
+let L=SAMPLE(), lastSummary='', touched=false;
+const CHECKS=[['adh','順從性良好（規則使用維持藥）'],['tech','吸入技巧已確認正確'],['risk','可調整的風險因子已處理（抽菸、過敏原、空汙、SABA 過度使用）'],['comorb','共病已處理（肥胖、慢性鼻竇炎、GERD、確診食物過敏）'],['dx','診斷已確認（排除 COPD、聲帶功能異常、心衰竭、支氣管擴張症）']];
+$('#lx-checks').innerHTML=CHECKS.map(([k,t])=>`<label class="lx-check"><input type="checkbox" id="lx-ck-${k}"><span>${esc(t)}</span></label>`).join('');
+$('#lx-risk').innerHTML=LX.RISK.map(([k,t])=>`<label class="lx-chip${k==='icu'||k==='saba'?' bad':''}"><input type="checkbox" data-k="${k}"><span>${esc(t)}</span></label>`).join('');
+
+function segSet(sel,v){$$(sel+' button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===String(v)?'true':'false'));}
+function segBind(sel,cb){$$(sel+' button').forEach(b=>b.addEventListener('click',()=>{segSet(sel,b.dataset.v);cb(b.dataset.v);touch();render();}));}
+function touch(){touched=true;$('#lx-sample').hidden=true;}
+const child=()=>L.age==='child', infant=()=>L.age==='infant', teen=()=>L.age==='adult'||L.age==='adol';
+const t1=()=>teen()&&L.m.track==='t1';
+
+function stepOptions(){
+  if(t1()&&L.m.step<2)L.m.step=2;
+  const opts=child()?[[1,'Step 1（AIR-only）'],[2,'Step 2（每日低劑量 ICS）'],[3,'Step 3'],[4,'Step 4'],[5,'Step 5']]
+    :t1()?[[2,'Steps 1–2（AIR-only）'],[3,'Step 3（低劑量 MART）'],[4,'Step 4（中劑量 MART）'],[5,'Step 5']]
+    :[[1,'Step 1（AIR-only）'],[2,'Step 2（低劑量 ICS）'],[3,'Step 3（低劑量 ICS-LABA）'],[4,'Step 4（中劑量 ICS-LABA）'],[5,'Step 5']];
+  $('#lx-step').innerHTML=opts.map(([v,t])=>`<option value="${v}"${v===L.m.step?' selected':''}>${t}</option>`).join('');
 }
-document.querySelectorAll('[data-age]').forEach(b=>b.addEventListener('click',()=>renderTx(b.dataset.age)));
-renderTx('a12');
+function fill(){
+  segSet('#lx-age',L.age);segSet('#lx-ctx',L.ctx);segSet('#lx-days',L.init.days);segSet('#lx-lf',L.init.lf);
+  $('#lx-night').checked=L.init.night;$('#lx-rexac').checked=L.init.recentExac;$('#lx-acute').checked=L.init.acute;
+  $('#lx-track').value=L.m.track;$('#lx-c1').value=L.m.c1;
+  ['day','night','rel','act'].forEach(k=>$('#lx-c-'+k).checked=!!L.m.ctl[k]);
+  $('#lx-exac').value=L.m.exac;$('#lx-fev1').value=L.m.fev1;$('#lx-stable').value=L.m.stable;
+  CHECKS.forEach(([k])=>$('#lx-ck-'+k).checked=L.m.checks[k]!==false);
+  $$('#lx-risk input').forEach(i=>i.checked=L.risk.has(i.dataset.k));
+  stepOptions();
+}
+
+segBind('#lx-age',v=>{L.age=v;if(v==='child'&&L.m.track==='t1')L.m.track='t2a';stepOptions();});
+segBind('#lx-ctx',v=>{L.ctx=v;});
+segBind('#lx-days',v=>{L.init.days=v;});
+segBind('#lx-lf',v=>{L.init.lf=v;});
+[['#lx-night','night'],['#lx-rexac','recentExac'],['#lx-acute','acute']].forEach(([id,k])=>$(id).addEventListener('change',e=>{L.init[k]=e.target.checked;touch();render();}));
+$('#lx-track').addEventListener('change',e=>{L.m.track=e.target.value;touch();stepOptions();render();});
+$('#lx-step').addEventListener('change',e=>{L.m.step=+e.target.value;touch();render();});
+$('#lx-c1').addEventListener('change',e=>{L.m.c1=e.target.value;touch();render();});
+['day','night','rel','act'].forEach(k=>$('#lx-c-'+k).addEventListener('change',e=>{L.m.ctl[k]=e.target.checked;touch();render();}));
+[['#lx-exac','exac'],['#lx-fev1','fev1'],['#lx-stable','stable']].forEach(([id,k])=>$(id).addEventListener('input',e=>{L.m[k]=e.target.value;touch();render();}));
+CHECKS.forEach(([k])=>$('#lx-ck-'+k).addEventListener('change',e=>{L.m.checks[k]=e.target.checked;touch();render();}));
+$$('#lx-risk input').forEach(i=>i.addEventListener('change',()=>{i.checked?L.risk.add(i.dataset.k):L.risk.delete(i.dataset.k);touch();render();}));
+
+/* clicking a rung in the overview sets the current step (and track for ≥12 y) */
+$('#lx-stairs').addEventListener('click',e=>{
+  const b=e.target.closest('button.lx-rung');if(!b)return;
+  L.ctx='maint';L.m.step=+b.dataset.step;
+  if(teen()&&b.dataset.track){if(b.dataset.track==='t1')L.m.track='t1';else if(L.m.track==='t1')L.m.track='t2a';}
+  touch();fill();render();
+  $('#lx-maint').scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+const fmtStep=(s,trk)=>(teen()&&trk==='t1'&&s<=2)?'1–2':String(s);
+function alertHtml(a){return `<div class="lx-alert ${a[0]}"><strong>${esc(a[1])}</strong><span>${esc(a[2])}</span></div>`;}
+
+function render(){
+  const inf=infant();
+  $('#lx-ctxwrap').hidden=inf;$('#lx-infant-note').hidden=!inf;
+  $('#lx-init').hidden=inf||L.ctx!=='init';$('#lx-maint').hidden=inf||L.ctx!=='maint';$('#lx-riskcard').hidden=inf;
+  $('#lx-result').hidden=inf;$('#lx-rx-card').hidden=inf;$('#lx-copy').closest('.card').hidden=inf;
+  $('#lx-init-src').textContent=child()?'Table 4':'Table 3';
+  $('#lx-days3').textContent=child()?'3–4 天/週':'約 3 天/週';
+  $('#lx-daysmost').textContent=child()?'約 4–5 天/週（大多數日子）':'≥4 天/週（大多數日子）';
+  $('#lx-trackwrap').hidden=child();
+  $('#lx-c1wrap').hidden=!(child()&&L.m.step===1);
+  const relNA=t1()||(child()&&L.m.step===1&&L.m.c1==='icsform');
+  $('#lx-c-relwrap').hidden=relNA;$('#lx-c-relna').hidden=!relNA;
+  if(relNA)L.m.ctl.rel=false,$('#lx-c-rel').checked=false;
+  const ctrack=child()?(relNA?'t1':'t2'):L.m.track;
+  const c=LX.control(L.m.ctl,ctrack);
+  $('#lx-cn').textContent=c.n+'/'+c.of;$('#lx-clvl').textContent=c.label;
+  $('#lx-clvl').className='lx-pill '+(c.level==='well'?'go':c.level==='partly'?'warn':'stop');
+  if(inf){renderStairs(null,null);renderInitTable(null);return;}
+
+  let step,from=null,title,sub,why,alerts=[],downList=null,dispTrack=teen()?L.m.track:null;
+  const fev1=L.ctx==='maint'?L.m.fev1:null, exac=L.ctx==='maint'?L.m.exac:0;
+  if(L.ctx==='init'){
+    const r=LX.initial({...L.init,age:L.age});
+    step=r.step;why=r.why;dispTrack=null;
+    title=(teen()&&step<=2)?'起始治療：Track 1 Steps 1–2 ／ Track 2 Step '+step:'起始治療：Step '+step;
+    sub=['','症狀不頻繁','症狀少於每週大多數日子','大多數日子有症狀、夜間醒來或肺功能低下','每天症狀或夜醒，加上肺功能低下或近期發作','初次表現即為急性發作'][r.row];
+    if(r.row===5)alerts.push(['stop','先依急性發作流程處置',teen()?'嚴重發作給短療程 OCS；並開始中劑量 MART（Track 2：中劑量 ICS-LABA＋需要時 ICS-SABA 或 SABA）。':'處理發作後開始：中劑量維持 ICS-LABA＋需要時 SABA，或低劑量 ICS-formoterol MART。']);
+    r.cautions.forEach(t=>alerts.push(['warn','注意',t]));
+    alerts.push(['info','開始治療時','記錄診斷依據、症狀控制與風險因子；可行時測肺功能；訓練吸入技巧；1–3 個月後回診。']);
+  }else{
+    const o=LX.ongoing({...L.m,age:L.age,icu:L.risk.has('icu'),riskN:LX.riskCount(L.risk,L.m.fev1,L.m.exac)});
+    from=o.from;why=o.why.slice();
+    const lab={stay:'維持目前治療',down:'可以考慮降階',up:'建議升階',consider:'考慮升階或同階換藥',fix:'先處理可調整的因素',severe:'進入重度氣喘評估'}[o.action];
+    if(o.action==='fix'){step=o.from;title=lab;sub='處理後 2–3 個月仍控制不良，再升至 Step '+fmtStep(o.next,L.m.track);}
+    else if(o.action==='severe'){step=5;title=lab;sub='區辨難治型與重度氣喘，評估 Type 2 表現型與生物製劑';}
+    else{step=o.to;title=lab+(o.from===o.to?'':'：Step '+fmtStep(o.from,L.m.track)+' → Step '+fmtStep(o.to,L.m.track));sub='控制度：'+c.label+'；過去 12 個月發作 '+o.exac+' 次';}
+    if(o.action==='fix')alerts.push(['warn','升階前先處理',o.issues.join('、')+'。']);
+    if(o.action==='severe')alerts.push(['stop','轉介重度氣喘評估','先確認吸入技巧、順從性、共病與診斷；再評估表現型與附加治療（見下方 Step 5 選項）。']);
+    o.cautions.forEach(t=>alerts.push(['warn','注意',t]));
+    if(o.action==='down')downList=LX.stepDown(L.age,L.m.track,o.from);
+  }
+  alerts=alerts.concat(LX.riskAlerts(L.risk,fev1,exac));
+
+  $('#lx-r-step').textContent=fmtStep(step,L.ctx==='init'?'t1':L.m.track);
+  $('#lx-r-title').textContent=title;$('#lx-r-sub').textContent=sub;
+  const merge=teen()&&(L.ctx==='init'?step<=2:L.m.track==='t1');
+  const on=(n,s)=>merge&&s<=2?n<=2:n<=s;
+  $('#lx-r-bar').innerHTML=[1,2,3,4,5].map(n=>`<i class="${on(n,step)?'on':''}${from!=null&&from!==step&&on(n,from)&&!on(n,step)?' from':''}"></i>`).join('');
+  $('#lx-r-barlab').innerHTML=[1,2,3,4,5].map(n=>`<span>${n}</span>`).join('');
+  $('#lx-r-why').innerHTML=why.map(w=>`<li>${esc(w)}</li>`).join('');
+  $('#lx-r-alerts').innerHTML=(downList?`<div class="lx-alert go"><strong>降階做法</strong><ul>${downList.map(d=>`<li>${esc(d)}</li>`).join('')}</ul></div>`:'')+alerts.map(alertHtml).join('');
+  if(L.ctx==='init'&&L.init.acute){
+    $('#lx-r-alerts').insertAdjacentHTML('afterbegin','<button class="btn no-print" id="lx-goacute" style="justify-self:start;padding:7px 14px">前往急性發作處置 →</button>');
+    $('#lx-goacute').addEventListener('click',()=>{document.querySelector('nav.tabs button[data-view="v-acute"]').click();});
+  }
+
+  const rg=LX.regimen(L.age,step,L.m.track);
+  let rx='',other='';
+  if(rg.child){
+    $('#lx-rx-h').textContent='6–11 歲 Step '+step+' 選項';
+    rx=`<div>${rg.pref.map((p,i)=>`<div class="lx-opt ${i===0?'first':'alt'}">${esc(p)}</div>`).join('')}</div>${rg.note?`<p class="lx-note">${esc(rg.note)}</p>`:''}`;
+    if(rg.other.length)other=`<div class="lx-optsub">其他選項（適應症有限或證據較少）</div>${rg.other.map(p=>`<div class="lx-opt other">${esc(p)}</div>`).join('')}`;
+  }else{
+    $('#lx-rx-h').textContent=step<=2?'建議處方':'建議處方 · Step '+step;
+    const cur=L.ctx==='maint'?(L.m.track==='t1'?'t1':'t2'):null;
+    rx=trk('t1','Track 1：ICS-formoterol 緩解',rg.t1,true,cur==='t1'?'首選 · 目前使用':'首選')
+      +trk('t2','Track 2：'+(L.ctx==='maint'&&L.m.track==='t2b'?'SABA 緩解':'ICS-SABA 或 SABA 緩解'),rg.t2,false,cur==='t2'?'替代 · 目前使用':'替代');
+    if(rg.other.length)other=`<div class="lx-optsub">其他控制藥選項（適應症有限或證據較少；GINA 完整報告）</div>${rg.other.map(p=>`<div class="lx-opt other">${esc(p)}</div>`).join('')}`;
+  }
+  if(rg.s5)other+=`<div class="lx-optsub">Step 5 可用的附加治療（${esc(LX.AGE[L.age])}）</div><div class="lx-opt alt"><b>LAMA</b>：${esc(rg.s5.lama.join('；'))}</div><div class="lx-opt alt"><b>生物製劑</b>：${esc(rg.s5.bio.join('；'))}</div>`;
+  $('#lx-rx').innerHTML=rx;$('#lx-other').innerHTML=other;
+
+  renderStairs(step,L.ctx==='maint'?from:null);
+  renderInitTable(L.ctx==='init'?LX.initial({...L.init,age:L.age}).row:null);
+  lastSummary=summary(step,title,sub,why,rg,c);
+}
+function trk(k,name,t,pref,tag){
+  return `<div class="lx-trk${pref?' pref':''}"><div class="lx-trk-h ${k}"><span>${esc(name)}</span><span class="lx-pill ${pref?'go':'mute'}">${esc(tag)}</span></div>
+    <div class="lx-trk-b"><div class="lx-trk-lab">${esc(t.lab)}</div>
+    <dl class="lx-kv"><dt>維持</dt><dd>${esc(t.mt)}</dd><dt>緩解</dt><dd>${esc(t.rel)}</dd></dl>
+    ${t.ex?`<div class="lx-dose">${esc(t.ex)}</div>`:''}${t.note?`<p class="lx-note">${esc(t.note)}</p>`:''}</div></div>`;
+}
+
+/* staircase overview built from the verified RX wording (Figure 5–8) */
+function renderStairs(rec,cur){
+  const key=infant()?'a5':child()?'a611':'a12', g=RX[key];
+  const n=key==='a5'?4:5;
+  $('#lx-ov-title').innerHTML='階梯總覽 · '+g.label+(key==='a611'?' <span class="en">Figure 8</span>':key==='a12'?' <span class="en">Figure 5–7</span>':'');
+  $('#lx-ov-sub').textContent=infant()?'≤5 歲取自 GINA 完整報告，僅供參考。':'點任一格可設為「目前階梯」並切到治療中模式。';
+  const curTrack=L.ctx==='maint'&&teen()?(L.m.track==='t1'?'t1':'t2'):null;
+  const blocks=key==='a12'?[['t1',g.t1],['t2',g.t2]]:[['t1',g.t1]];
+  let h='';
+  blocks.forEach(([k,tr])=>{
+    const showRec=key==='a12'?(L.ctx==='init'||curTrack===null||curTrack===k):true;
+    h+=`<div class="lx-track"><div class="lx-track-h"><b>${tr.name}</b></div><div class="lx-stairs" style="--n:${n}">`;
+    tr.steps.forEach((s,i)=>{
+      const st=i+1;
+      if(key==='a12'&&k==='t1'&&i===0)return;
+      const span=key==='a12'&&k==='t1'&&st===2?'grid-column:1 / span 2;':'';
+      const lo=key==='a12'&&k==='t1'&&st===2?1:st;
+      const isRec=rec!=null&&showRec&&(rec>=lo&&rec<=st);
+      const isCur=cur!=null&&(key!=='a12'||curTrack===k)&&cur>=lo&&cur<=st;
+      const isAlt=!showRec&&rec!=null&&rec>=lo&&rec<=st;
+      const tags=isRec&&isCur?'<span class="tag r">目前・建議</span>':isRec?'<span class="tag r">建議</span>':isCur?'<span class="tag c">目前</span>':isAlt?'<span class="tag a">換 Track 的同階選項</span>':'';
+      const el=infant()?'div':'button';
+      h+=`<${el} class="lx-rung ${st===5&&key!=='a5'?'t5':k} h${st}${isRec?' rec':''}${isCur?' cur':''}${isAlt?' alt':''}" style="${span}" ${el==='button'?`type="button" data-step="${st}" data-track="${k}" aria-label="設為目前階梯：${esc(s.t.replace(/<[^>]+>/g,''))}"`:''}>${tags}
+        <span class="r-s">${s.t}</span><span class="r-m">${s.d}</span>${s.ex!=='—'?`<span class="r-x">${s.ex}</span>`:''}</${el}>`;
+    });
+    h+=`</div><div class="lx-rel ${k==='t2'?'t2':''}">${g.reliever[k]}</div></div>`;
+  });
+  $('#lx-stairs').innerHTML=h;
+}
+function renderInitTable(row){
+  const INIT=infant()?null:child()?INIT_A611:INIT_A12, a12=teen();
+  if(!INIT){$('#lx-inittbl').hidden=true;return;}
+  $('#lx-inittbl').hidden=false;
+  $('#lx-inittbl').innerHTML=`<h3 style="font-size:16px;margin-bottom:4px">建議的<b>初始</b>治療 <span class="en">${a12?'Table 3':'Table 4'}</span></h3>
+    <p class="small muted" style="margin:0 0 12px">確診後應立即開始最合適的治療，依病人的氣喘病史與目前症狀決定。${row?'目前對應的列已標示。':''}</p>
+    <div class="tbl-wrap"><table><thead><tr><th style="width:34%">表現的症狀</th><th>${a12?'首選初始治療（Track 1）':'首選初始治療'}</th>${a12?'<th>替代初始治療（Track 2）</th>':''}</tr></thead><tbody>
+    ${INIT.map((r,i)=>`<tr class="${row===i+1?'lx-hit':''}"><td>${r.q}</td><td>${r.t1}</td>${a12?`<td>${r.t2}</td>`:''}</tr>`).join('')}</tbody></table></div>
+    <div class="note small" style="margin-top:12px">開始治療時同時要做：<b>記錄氣喘診斷的依據</b> · <b>記錄症狀控制與風險因子</b> · 可行時<b>評估肺功能</b> · <b>訓練病人（與家長）正確使用吸入器並檢查技巧</b> · <b>安排回診</b>。</div>`;
+}
+function summary(step,title,sub,why,rg,c){
+  const L2=[];
+  L2.push(`【氣喘治療階梯｜GINA 2026】${LX.AGE[L.age]}，${L.ctx==='init'?'初診（尚未使用含 ICS 治療）':'治療中'}`);
+  if(L.ctx==='maint'){
+    const tn={t1:'Track 1（ICS-formoterol 緩解）',t2a:'Track 2（ICS-SABA 緩解）',t2b:'Track 2（SABA 緩解）'}[L.m.track];
+    L2.push(`目前：${child()?'':tn+' '}Step ${fmtStep(L.m.step,L.m.track)}；控制度 ${c.label}（${c.n}/${c.of}）；過去12個月發作 ${L.m.exac||0} 次；FEV1 ${L.m.fev1||'未測'}%；穩定 ${L.m.stable||0} 個月`);
+  }
+  L2.push(`結論：${title}${sub?'（'+sub+'）':''}`);
+  if(why.length)L2.push('依據：'+why.join('；'));
+  if(rg.child)L2.push('選項：'+rg.pref.join('／'));
+  else{L2.push(`Track 1：${rg.t1.lab}｜${rg.t1.mt}｜${rg.t1.ex}`);L2.push(`Track 2：${rg.t2.lab}｜${rg.t2.mt}｜緩解 ${rg.t2.rel}${rg.t2.ex?'｜'+rg.t2.ex:''}`);}
+  const rk=LX.RISK.filter(([k])=>L.risk.has(k)).map(x=>x[1]);
+  if(rk.length)L2.push('風險因子：'+rk.join('、'));
+  return L2.join('\n');
+}
+function copyText(txt){
+  const ok=()=>flash('已複製到剪貼簿');
+  const fb=()=>{const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){flash('無法自動複製');}ta.remove();};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(txt).then(ok,fb);else fb();
+}
+function flash(m){const b=$('#lx-copy'),t=b.textContent;b.textContent=m;setTimeout(()=>b.textContent=t,1500);}
+$('#lx-copy').addEventListener('click',()=>copyText(lastSummary));
+
+fill();render();
+
+/* called from the wizard: load a case into this tab */
+return {load(st){L=st;touch();fill();render();}, blank:SAMPLE};
+})();
 
 /* ================= wizard ================= */
 const S={scenario:null,age:null,sx:[],obj:{},dxClin:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[]};
@@ -1076,7 +1662,7 @@ function render(){
   const canNext = validate();
   box.innerHTML = h + `<div class="actions no-print">
     ${idx>0?'<button class="btn plain" id="back">← 上一步</button>':''}
-    ${name!=='結果'?`<button class="btn" id="next" ${canNext?'':'disabled'}>下一步 →</button>`:'<button class="btn plain" id="print">列印／存 PDF</button><button class="btn ghost" id="again">重新評估</button>'}
+    ${name!=='結果'?`<button class="btn" id="next" ${canNext?'':'disabled'}>下一步 →</button>`:(S.scenario==='tx'&&S.age!=='a5'?'<button class="btn" id="toLadder">在「治療階梯」開啟此個案 →</button>':'')+'<button class="btn plain" id="print">列印／存 PDF</button><button class="btn ghost" id="again">重新評估</button>'}
     ${name!=='結果'&&!canNext?'<span class="small muted">請先完成本頁選項</span>':''}
   </div>`;
   bind();
@@ -1116,6 +1702,7 @@ function bind(){
   const bk=box.querySelector('#back'); if(bk) bk.addEventListener('click',()=>{idx--;render();window.scrollTo({top:0,behavior:'smooth'});});
   const pr=box.querySelector('#print'); if(pr) pr.addEventListener('click',()=>window.print());
   const ag=box.querySelector('#again'); if(ag) ag.addEventListener('click',reset);
+  const tl=box.querySelector('#toLadder'); if(tl) tl.addEventListener('click',()=>{LXUI.load(wizToLadder());document.querySelector('nav.tabs button[data-view="v-tx"]').click();});
 }
 
 function result(){ return S.scenario==='dx'?resDx() : S.scenario==='tx'?resTx() : resAcute(); }
@@ -1207,6 +1794,25 @@ function resDx(){
   return h+refBox();
 }
 
+/* map wizard answers onto the 治療階梯 tab state (and the engine input) */
+function wizToLadder(){
+  const st=LXUI.blank(), RK=['saba','ics','comorb','expo','psy','lf','t2',null,'icu'];
+  st.age=S.age==='a611'?'child':'adult';
+  st.risk=new Set(S.risk.map(i=>RK[i]).filter(Boolean));
+  if(S.cur===0){
+    const r=+S.init;
+    st.ctx='init';
+    st.init={days:['le2','3','most','daily','le2'][r]||'le2',lf:'na',night:false,recentExac:r===3,acute:r===4};
+  }else{
+    st.ctx='maint';
+    st.m={track:S.age==='a12'?(S.track==='t2'?'t2a':'t1'):'t2a',step:S.cur,c1:'icssaba',
+      ctl:{day:S.ctrl[0]===1,night:S.ctrl[1]===1,rel:S.ctrl[2]===1,act:S.ctrl[3]===1},
+      exac:S.risk.includes(7)?'1':'0',fev1:'',stable:S.ctrlDur==='ge3'?'3':'0',
+      checks:{adh:true,tech:true,risk:true,comorb:true,dx:true}};
+    st.m.__eng={...st.m,age:st.age,icu:S.risk.includes(8),riskN:S.risk.length};
+  }
+  return st;
+}
 function resTx(){
   const yes=S.ctrl.filter(v=>v===1).length;
   const lvl = yes===0?['well','控制良好 Well controlled','v-ok'] : yes<=2?['partly','部分控制 Partly controlled','v-warn'] : ['un','控制不良 Uncontrolled','v-bad'];
@@ -1214,12 +1820,16 @@ function resTx(){
   const maxStep=S.age==='a5'?4:5;
   const INIT = S.age==='a12'?INIT_A12 : S.age==='a611'?INIT_A611 : null;
 
-  let rec, action, initRow=null;
+  let rec, action, initRow=null, eng=null;
   if(S.cur===0){
     if(INIT && S.init!==null){ initRow=INIT[+S.init]; rec=initRow.step; }
     else rec=2;
     action='開始治療 Start';
-    if(lvl[0]==='un') rec=Math.max(rec,3);
+  } else if(S.age!=='a5'){
+    /* same rules as the 治療階梯 tab (LX engine) */
+    eng=LX.ongoing(wizToLadder().m.__eng);
+    rec=eng.to;
+    action={stay:'維持現有治療 Maintain',down:'可考慮降階 Consider step down',up:'升階 Step up',consider:'考慮升階或同階換藥 Consider step up',severe:'Step 5 仍未控制：重度氣喘評估',fix:'先處理可調整因素'}[eng.action];
   } else if(lvl[0]==='un'){ rec=Math.min(S.cur+1,maxStep); action='升階 Step up'; }
   else if(lvl[0]==='partly'){ rec=Math.min(S.cur+1,maxStep); action='考慮升階 Consider step up'; }
   else {
@@ -1240,7 +1850,9 @@ function resTx(){
       <div class="muted small">目前：${S.cur===0?'未治療':'Step '+S.cur} → 建議：<b style="color:var(--brand-d)">Step ${rec}</b>${S.age==='a12'?`（${trackKey==='t1'?'Track 1':'Track 2'}）`:''}</div>
       ${initRow?`<div class="note info small" style="margin-top:10px">依初始症狀型態（${S.age==='a12'?'Table 3':'Table 4'}）對應起始治療。</div>`:''}
       ${lvl[0]==='well'&&S.cur>0&&S.ctrlDur!=='ge3'?'<div class="note small" style="margin-top:10px">控制良好但穩定未滿 2–3 個月，<b>先維持</b>，滿 2–3 個月後再評估降階。</div>':''}
-      ${lvl[0]==='well'&&S.cur>0&&hiRisk&&S.ctrlDur==='ge3'?'<div class="note small" style="margin-top:10px">存在未來發作風險因子，<b>暫緩降階</b>，先處理可調整的風險。</div>':''}
+      ${eng?eng.cautions.map(t=>`<div class="note small" style="margin-top:10px">${t}</div>`).join(''):''}
+      ${lvl[0]==='well'&&S.cur>0&&hiRisk&&S.ctrlDur==='ge3'&&S.age==='a5'?'<div class="note small" style="margin-top:10px">存在未來發作風險因子，<b>暫緩降階</b>，先處理可調整的風險。</div>':''}
+      ${initRow&&lvl[0]==='un'&&+S.init<2?'<div class="note small" style="margin-top:10px">控制評估為「未控制」，但所選症狀型態為較輕的一列——請再確認症狀型態。</div>':''}
       ${lvl[0]!=='well'?'<div class="note small" style="margin-top:10px"><b>升階前先查四件事：順從性、吸入技巧、風險因子、共病。</b>也可先在同一 step 內換成其他選項，或切換 Track。</div>':''}
     </div></div>
     <div class="rx"><div class="rx-h ${trackKey}">未來發作風險 <span class="muted" style="font-weight:400">（${S.risk.length} 項）</span></div><div class="rx-b">
