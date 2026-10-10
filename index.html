@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>氣喘臨床決策工具 · GINA 2026</title>
+<style>
+:root{
+  --bg:#f6f8f9; --surface:#ffffff; --line:#dde5e8; --line2:#eef3f5;
+  --ink:#12252c; --ink2:#405860; --ink3:#6d858e;
+  --brand:#0d7f8c; --brand-d:#065d68; --brand-l:#e6f4f5;
+  --t1:#0d7f8c; --t1l:#e6f4f5;
+  --t2:#a86a12; --t2l:#fbf2e2;
+  --ok:#17795e; --okl:#e4f3ee;
+  --warn:#b4690e; --warnl:#fdf1e0;
+  --bad:#b3261e; --badl:#fceceb;
+  --r:12px; --sh:0 1px 2px rgba(16,40,48,.06),0 4px 14px rgba(16,40,48,.05);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",Roboto,sans-serif;
+  font-size:15.5px;line-height:1.65}
+h1,h2,h3,h4,h5{line-height:1.35;margin:0}
+a{color:var(--brand-d)}
+.en{font-size:.84em;color:var(--ink3);font-weight:400}
+header.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.93);backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;margin-right:auto}
+.logo .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(140deg,var(--brand),#12a3a3);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px}
+.logo b{font-size:16.5px;letter-spacing:.2px}
+.logo span{display:block;font-size:11.5px;color:var(--ink3);font-weight:500;letter-spacing:.3px}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap}
+nav.tabs button{border:1px solid transparent;background:none;padding:7px 13px;border-radius:99px;font:inherit;font-size:14px;color:var(--ink2);cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{background:var(--line2);color:var(--ink)}
+nav.tabs button[aria-selected="true"]{background:var(--brand);color:#fff;font-weight:600}
+main{max-width:1120px;margin:0 auto;padding:26px 20px 90px}
+.view[hidden]{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.pad{padding:22px}
+.muted{color:var(--ink3)}
+.small{font-size:13.5px}
+.sec-title{font-size:20px;font-weight:680;margin-bottom:6px;letter-spacing:.2px}
+.sec-sub{color:var(--ink3);font-size:14px;margin-bottom:18px}
+.hr{height:1px;background:var(--line2);margin:18px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.badge{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.4px;padding:3px 9px;border-radius:99px;background:var(--brand-l);color:var(--brand-d);vertical-align:middle}
+.badge.new{background:#e9f0fe;color:#1b4bb8}
+.badge.src{background:#eef3f5;color:var(--ink3);font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+th{background:#f2f6f7;font-weight:650;font-size:13px;color:var(--ink2)}
+tbody tr:hover{background:#fafcfc}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.note{border-left:3px solid var(--warn);background:var(--warnl);padding:11px 14px;border-radius:0 8px 8px 0;font-size:13.6px;color:#6b4407}
+.note.info{border-color:var(--brand);background:var(--brand-l);color:#0a4d56}
+.note.crit{border-color:var(--bad);background:var(--badl);color:#7d1c17}
+ul.tight{margin:8px 0;padding-left:20px}
+ul.tight li{margin:3px 0}
+.progress{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink3)}
+.pdot{display:flex;align-items:center;gap:6px}
+.pdot i{width:9px;height:9px;border-radius:99px;background:var(--line);display:block}
+.pdot.done i{background:var(--brand)}
+.pdot.cur i{background:var(--brand);box-shadow:0 0 0 4px var(--brand-l)}
+.pdot.cur{color:var(--ink);font-weight:650}
+.psep{width:14px;height:1px;background:var(--line)}
+.wiz-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.q{font-size:17px;font-weight:660;margin-bottom:4px}
+.qh{font-size:13.5px;color:var(--ink3);margin-bottom:16px}
+.opts{display:grid;gap:10px}
+.opts.two{grid-template-columns:1fr 1fr}
+.opts.three{grid-template-columns:repeat(3,1fr)}
+@media(max-width:760px){.opts.two,.opts.three{grid-template-columns:1fr}}
+.opt{text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:11px;padding:14px 16px;font:inherit;cursor:pointer;transition:.13s;display:block;width:100%}
+.opt:hover{border-color:var(--brand);background:var(--brand-l)}
+.opt b{display:block;font-size:15.5px;font-weight:650;margin-bottom:2px}
+.opt em{font-style:normal;font-size:13.2px;color:var(--ink3);line-height:1.5}
+.opt.sel{border-color:var(--brand);background:var(--brand-l);box-shadow:0 0 0 3px rgba(13,127,140,.1)}
+.chk{display:flex;gap:11px;align-items:flex-start;border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;background:var(--surface);transition:.12s}
+.chk:hover{border-color:var(--brand)}
+.chk.on{border-color:var(--brand);background:var(--brand-l)}
+.chk input{margin:3px 0 0;accent-color:var(--brand);width:17px;height:17px;flex:none}
+.chk div b{display:block;font-weight:600;font-size:14.6px}
+.numrow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12.5px;color:var(--ink2);font-weight:600}
+.field input{border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;font-size:15px;background:var(--surface);color:var(--ink);min-width:130px}
+.field input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(13,127,140,.12)}
+.actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;align-items:center}
+.btn{border:1.5px solid var(--brand);background:var(--brand);color:#fff;border-radius:9px;padding:10px 20px;font:inherit;font-weight:640;cursor:pointer;font-size:14.5px}
+.btn:hover{background:var(--brand-d);border-color:var(--brand-d)}
+.btn.ghost{background:none;color:var(--brand-d)}
+.btn.ghost:hover{background:var(--brand-l)}
+.btn.plain{background:none;border-color:var(--line);color:var(--ink2)}
+.btn.plain:hover{background:var(--line2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.verdict{border-radius:12px;padding:18px 20px;margin-bottom:16px;border:1px solid}
+.verdict h3{font-size:19px;margin-bottom:5px}
+.verdict p{margin:0;font-size:14.3px}
+.v-ok{background:var(--okl);border-color:#b9dfd3;color:#0d5844}
+.v-warn{background:var(--warnl);border-color:#f0d6a8;color:#7a4c08}
+.v-bad{background:var(--badl);border-color:#f2c4c1;color:#8c1c16}
+.v-info{background:var(--brand-l);border-color:#bcdfe2;color:#0a4d56}
+.rx{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:14px;background:var(--surface)}
+.rx-h{padding:11px 16px;font-weight:660;font-size:14.5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.rx-h.t1{background:var(--t1l);color:var(--brand-d);border-bottom:1px solid #cde9eb}
+.rx-h.t2{background:var(--t2l);color:#7d4d08;border-bottom:1px solid #f0e0bf}
+.rx-b{padding:14px 16px;font-size:14.2px}
+.dose{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.2px;background:#f3f7f8;border:1px solid var(--line2);border-radius:6px;padding:1px 6px}
+.checklist{list-style:none;padding:0;margin:8px 0 0}
+.checklist li{padding:7px 0 7px 26px;position:relative;font-size:14.2px;border-bottom:1px solid var(--line2)}
+.checklist li:last-child{border:0}
+.checklist li::before{content:"";position:absolute;left:4px;top:14px;width:7px;height:7px;border-radius:99px;background:var(--brand)}
+.ladder{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+@media(max-width:900px){.ladder{grid-template-columns:1fr}}
+.rung{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);font-size:13.3px}
+.rung h5{font-size:12.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
+.rung.t1{border-top:3px solid var(--t1)}
+.rung.t2{border-top:3px solid var(--t2)}
+.rung .main{font-weight:640;font-size:14px;margin-bottom:4px;display:block}
+.rung.hi{box-shadow:0 0 0 3px rgba(13,127,140,.18);border-color:var(--brand)}
+.sev{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:900px){.sev{grid-template-columns:1fr}}
+.sevcard{border-radius:10px;padding:14px;font-size:13.3px;border:1px solid}
+.s1{background:var(--okl);border-color:#b9dfd3}
+.s2{background:var(--warnl);border-color:#f0d6a8}
+.s3{background:var(--badl);border-color:#f2c4c1}
+.sevcard b.t{display:block;font-size:14.8px;margin-bottom:7px}
+.sevcard ul{margin:0;padding-left:17px}
+.sevcard li{margin:2px 0}
+.filterbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.filterbar input{flex:1;min-width:200px;border:1.5px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;font-size:14.5px}
+.filterbar input:focus{outline:none;border-color:var(--brand)}
+footer.foot{border-top:1px solid var(--line);margin:40px auto 0;padding:22px 20px 60px;font-size:12.8px;color:var(--ink3);max-width:1120px}
+@media print{header.top,nav.tabs,.actions,.no-print{display:none!important}
+  body{background:#fff;font-size:12px}.card{box-shadow:none;border-color:#ccc}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo">
+      <div class="mark">氣</div>
+      <div><b>氣喘臨床決策工具</b><span>Asthma Clinical Decision Aid · GINA 2026 Summary Guide</span></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-view="v-wizard">決策精靈</button>
+      <button role="tab" aria-selected="false" data-view="v-dx">診斷</button>
+      <button role="tab" aria-selected="false" data-view="v-assess">評估與分級</button>
+      <button role="tab" aria-selected="false" data-view="v-tx">治療階梯</button>
+      <button role="tab" aria-selected="false" data-view="v-acute">急性發作</button>
+      <button role="tab" aria-selected="false" data-view="v-dose">劑量表</button>
+      <button role="tab" aria-selected="false" data-view="v-ref">更新與參考</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ WIZARD ============ -->
+<section class="view" id="v-wizard">
+  <div class="wiz-head">
+    <div style="flex:1;min-width:260px">
+      <div class="sec-title">逐步決策精靈 <span class="en">Step-by-step decision wizard</span></div>
+      <div class="sec-sub">依 GINA 2026 Summary Guide 流程逐題作答，輸出診斷判讀、控制分級與治療建議。僅供臨床參考，需結合個別病人狀況判斷。</div>
+    </div>
+    <button class="btn plain no-print" id="restart">重新開始</button>
+  </div>
+  <div class="progress no-print" id="prog"></div>
+  <div class="card pad" style="margin-top:16px" id="wizbox"></div>
+</section>
+
+<!-- ============ DIAGNOSIS ============ -->
+<section class="view" id="v-dx" hidden>
+  <div class="sec-title">診斷 <span class="en">Diagnosis</span></div>
+  <div class="sec-sub">GINA 2026 Figure 1 + Table 1。診斷需同時具備「多變的呼吸道症狀病史」與「已證實的可變呼氣氣流受限」。</div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:8px">定義 <span class="en">Definition</span></h3>
+    <p style="margin:0 0 10px;font-size:14.5px">氣喘是一種<b>異質性疾病</b>，通常以<b>慢性氣道發炎</b>為特徵。以呼吸道症狀病史（喘鳴 wheeze、呼吸短促、胸悶、咳嗽）及<b>可變呼氣氣流受限</b>來定義，症狀與氣流受限程度隨時間變化。</p>
+    <div class="note info"><b>要點：</b>氣流受限後期可能變為固定性（persistent）。氣道過度反應與氣道發炎雖常見，但<b>非診斷之必要或充分條件</b>。</div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">診斷流程 <span class="en">Figure 1</span></h3>
+    <ol class="tight" style="padding-left:20px;font-size:14.3px">
+      <li>慢性或反覆呼吸道症狀的病人 → <b>症狀、病史與理學檢查是否典型？</b>否 → 進一步檢查其他診斷</li>
+      <li>是 → <b>有無肺量計或 PEF？</b>沒有 → 考慮生物標記 → 若其他診斷不太可能，<b>經驗性給予含 ICS 治療</b></li>
+      <li>有 → 做支氣管擴張劑前後肺功能 → <b>是否證實可變呼氣氣流受限？</b></li>
+      <li>是 → <b>以含 ICS 治療</b>；否 → <b>症狀發作期間重測</b>或加做其他檢查</li>
+      <li>經驗性治療者：<b>1–3 個月後複評</b>（含 PEF 或肺量計）。症狀與肺功能改善 → 依氣喘治療；未改善 → 轉診上級評估</li>
+    </ol>
+    <div class="note info" style="margin-top:12px"><b>Test before treating：</b>在開始含 ICS 治療<b>之前</b>先確認診斷，一旦控制改善再回頭確診會困難得多。若病人以嚴重未控制的呼吸道症狀／徵象表現，先<b>當作急性發作處理</b>。</div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">支持氣喘的症狀特徵 <span class="en">Table 1.1</span></h3>
+      <p class="small muted" style="margin:0 0 8px">典型症狀：喘鳴、呼吸短促、胸悶、咳嗽。</p>
+      <ul class="tight small">
+        <li>症狀的<b>頻率與強度會變化</b></li>
+        <li>常在<b>夜間或起床時</b>發生或加重</li>
+        <li>常由<b>運動、大笑、過敏原、冷空氣</b>誘發</li>
+        <li><b>用力後症狀加重（極具特異性）</b></li>
+        <li>常在<b>病毒性呼吸道感染</b>時發生或加重</li>
+      </ul>
+    </div>
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">降低氣喘可能性的線索</h3>
+      <ul class="tight small">
+        <li>單獨慢性咳嗽、無其他呼吸道症狀</li>
+        <li>慢性大量痰液</li>
+        <li>呼吸困難合併頭暈、頭重腳輕、周邊針刺感</li>
+        <li>運動時胸痛</li>
+        <li>吸氣性喘鳴（stridor）→ 考慮上呼吸道／聲帶功能異常</li>
+      </ul>
+      <div class="note small" style="margin-top:10px">急性呼吸困難的其他原因：氣胸、過敏性休克、可誘發性喉阻塞、肺炎、急性心臟衰竭、肺栓塞、異物吸入。</div>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:4px">可變呼氣氣流受限的證據 <span class="en">Table 1.2</span></h3>
+    <p class="small muted" style="margin:0 0 12px">下列<b>任一項</b>即表示呼氣肺功能有過度變異。注意 GINA 此表的年齡分界為<b>成人 ≥18 歲</b>與<b>兒童 6–17 歲</b>。</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:26%">檢查</th><th>成人 ≥18 歲</th><th>兒童 6–17 歲</th></tr></thead>
+        <tbody>
+          <tr><td><b>支氣管擴張劑反應性試驗</b><br><span class="muted small">（可逆性試驗）</span></td>
+              <td>FEV<sub>1</sub> <b>或 FVC</b> 較給藥前 ↑ <b>≥12% 且 ≥200 mL</b><br><span class="muted small">（或 PEF ↑ ≥20%）</span></td>
+              <td>FEV<sub>1</sub> ↑ <b>≥12% 預測值</b><br><span class="muted small">（或 PEF ↑ ≥15%）</span></td></tr>
+          <tr><td><b>PEF 平均每日變異度</b><br><span class="muted small">連續 2 週</span></td><td>&gt; 10%</td><td>&gt; 13%</td></tr>
+          <tr><td><b>ICS 治療 4 週後顯著改善</b></td>
+              <td>FEV<sub>1</sub> 或 FVC ↑ ≥12% 且 ≥200 mL<br><span class="muted small">（或 PEF ↑ ≥20%）</span></td>
+              <td>FEV<sub>1</sub> ↑ ≥12% 預測值<br><span class="muted small">（或 PEF ↑ ≥15%）</span></td></tr>
+          <tr><td><b>支氣管激發試驗陽性</b></td><td colspan="2">標準化激發試驗：methacholine、過度換氣、高張鹽水、mannitol 或<b>運動</b><br><span class="muted small">特異性佳但<b>敏感性差</b></span></td></tr>
+          <tr><td><b>就診間肺功能過度變異</b></td>
+              <td>FEV<sub>1</sub> 就診間變化 ≥12% 且 ≥200 mL<br><span class="muted small">（或 PEF ≥20%）</span></td>
+              <td>FEV<sub>1</sub> 就診間變化 ≥12%<br><span class="muted small">（或 PEF ≥15%）</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="note small"><b>測 BDR 的操作細節：</b>給 <b>200–400 mcg salbutamol</b> 後 <b>10–15 分鐘</b>再測。檢查前先停用支氣管擴張劑會更容易呈現陽性：<b>SABA ≥4 小時</b>、<b>formoterol 或 salmeterol ≥24 小時</b>、<b>vilanterol 或 indacaterol ≥48 小時</b>。</div>
+      <div class="note small"><b>注意：</b>PEF 可靠度低於肺量計，僅在無法做肺量計時使用；每次用同一台 PEF 計、取三次中最高值。氣喘病人在<b>病毒感染期間</b>可能測不到支氣管擴張劑反應。</div>
+    </div>
+    <p class="small muted" style="margin:12px 0 0"><b>PEF 每日變異度算法：</b>①早晚各測 PEF 連續 1–2 週（每次測 3 下取最高）②每日變異度 =（早晚 PEF 差值）÷（早晚 PEF 平均）③把每日變異度加總 ÷ 天數。</p>
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">Type 2 生物標記在診斷的角色</h3>
+      <p class="small" style="margin:0 0 8px">在<b>有典型氣喘症狀</b>、但肺量計／PEF 無法取得或結果陰性的病人：</p>
+      <ul class="tight small">
+        <li><b>FeNO</b>：成人／青少年 &gt; 50 ppb；兒童 &gt; 35 ppb</li>
+        <li><b>血液嗜酸性球</b>：高於當地／區域參考範圍</li>
+      </ul>
+      <p class="small" style="margin:8px 0 0">可<b>支持</b> Type 2 氣喘診斷，但也可能來自非氣喘疾病。</p>
+      <div class="note crit small" style="margin-top:10px">低值<b>不能排除</b>氣喘。FeNO 與嗜酸性球會隨性別、年齡、儀器與採檢地點大幅變動；嗜酸性球早晨較高，FeNO 清晨較低。</div>
+    </div>
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">兒童 ≤5 歲的診斷 <span class="badge src">完整報告</span></h3>
+      <p class="small" style="margin:0 0 10px">此年齡層無法可靠執行肺功能，屬<b>臨床診斷</b>，依三要件：</p>
+      <ol class="tight small" style="padding-left:20px">
+        <li><b>反覆的喘鳴／咳嗽發作</b>，尤其非僅出現於病毒感染時</li>
+        <li><b>排除其他診斷</b></li>
+        <li><b>對氣喘藥物的治療反應</b>：試驗性低劑量 ICS 2–3 個月改善、停藥後惡化</li>
+      </ol>
+      <p class="small muted" style="margin:8px 0 0"><b>鑑別診斷：</b>反覆病毒感染、胃食道逆流、異物吸入、氣管／支氣管軟化、囊性纖維化、原發性纖毛運動障礙、先天心臟病、支氣管肺發育不良、免疫缺損、結核、血管環壓迫。</p>
+      <div class="note small" style="margin-top:10px">2026 Summary Guide <b>未涵蓋</b> ≤5 歲，內容取自 GINA 完整報告；細節請核對完整報告第 10–11 章。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ASSESSMENT ============ -->
+<section class="view" id="v-assess" hidden>
+  <div class="sec-title">評估與分級 <span class="en">Assessment</span></div>
+  <div class="sec-sub">GINA 2026 Table 2。<b>症狀控制</b>與<b>未來風險</b>要分開評估；<b>嚴重度</b>則需治療數個月後才能回溯判定。</div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">A. 症狀控制評估（過去 4 週）<span class="en">Table 2A</span></h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:52%">過去 4 週，病人是否有：</th><th>控制良好</th><th>部分控制</th><th>控制不良</th></tr></thead>
+        <tbody>
+          <tr><td>日間症狀每週超過 2 次？<br>因氣喘夜間醒來？<br>需要 SABA 緩解藥每週超過 2 次？<br>因氣喘造成活動受限？</td>
+              <td><b>皆無</b></td><td><b>1–2 項</b></td><td><b>3–4 項</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note" style="margin-top:12px"><b>緩解藥那一題只適用於使用 SABA 緩解劑的病人</b>（不適用於使用 ICS-formoterol 緩解劑者），且<b>不計入運動前使用的 SABA</b>。</div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">B.1 急性發作的風險因子 <span class="en">Table 2B.1</span></h3>
+    <p class="small" style="margin:0 0 8px"><b>症狀未控制本身就是重要風險因子。</b>下列因子即使症狀很少也會增加發作風險：</p>
+    <ul class="tight small">
+      <li><b>SABA 過度使用</b>（每年 ≥3 支 200 劑裝）— 也增加氣喘死亡風險，尤其<b>每月 ≥1 支</b>時</li>
+      <li><b>ICS 不足</b>：未使用 ICS、順從性差、吸入技巧錯誤</li>
+      <li>共病：<b>肥胖、慢性鼻竇炎、胃食道逆流、確診的食物過敏</b>，或<b>懷孕</b></li>
+      <li>暴露：<b>已致敏的過敏原、抽菸、電子菸、空氣污染</b></li>
+      <li>重大心理或社會經濟問題</li>
+      <li>肺功能差（尤其 <b>FEV₁ &lt;60% 預測值</b>）、支氣管擴張劑反應幅度大</li>
+      <li><b>Type 2 發炎指標</b>：血液嗜酸性球偏高、FeNO 偏高</li>
+      <li><b>過去一年曾嚴重發作</b>，或終生曾因氣喘插管／進加護病房</li>
+    </ul>
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">B.2 發展成固定性氣流受限的風險</h3>
+      <ul class="tight small">
+        <li>早產、低出生體重、嬰兒期體重快速增加、頻繁有痰咳嗽</li>
+        <li>有嚴重發作病史卻<b>未使用 ICS</b></li>
+        <li>暴露於菸害或有害化學物質</li>
+        <li>診斷時 FEV₁ 偏低</li>
+        <li>痰液或血液<b>嗜酸性球偏高</b></li>
+      </ul>
+    </div>
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">B.3 藥物副作用的風險</h3>
+      <ul class="tight small">
+        <li><b>全身性</b>：頻繁使用口服類固醇、長期高劑量／高效價 ICS、<b>P450 抑制劑</b>（ritonavir、ketoconazole、itraconazole）</li>
+        <li><b>局部性</b>：高劑量／高效價 ICS、吸入技巧不佳</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card pad">
+    <h3 style="font-size:16px;margin-bottom:4px">嚴重度如何判定 <span class="en">GINA 2026, p.13</span></h3>
+    <p class="small muted" style="margin:0 0 12px">嚴重度指的是「控制症狀與預防發作<b>所需要的治療強度</b>」，需<b>治療數個月後</b>才能評估。</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:22%">分類</th><th>GINA 2026 定義</th></tr></thead>
+        <tbody>
+          <tr><td><b>輕度 Mild</b></td><td>以<b>需要時 ICS-formoterol</b>，或<b>每日低劑量 ICS</b> 即可控制良好</td></tr>
+          <tr><td><b>難治型<br>Difficult-to-treat</b></td><td>已處方<b>中或高劑量 ICS-LABA</b>、或使用維持性口服類固醇，仍未控制；或需要高劑量治療才能維持良好控制與降低發作風險。<b>並非指「難搞的病人」</b></td></tr>
+          <tr><td><b>重度 Severe</b></td><td>在<b>良好順從性</b>、已優化的<b>高劑量 ICS-LABA</b> 且已處理相關因子的情況下<b>仍未控制</b>；或需要高劑量 ICS-LABA 才能維持良好控制</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note" style="margin-top:14px"><b>難治型常見的可處理原因：</b>吸入技巧錯誤、順從性差、抽菸、共病未處理，或<b>診斷本身就錯了</b>。務必先排除這些再標記為「重度」。</div>
+    <div class="note info" style="margin-top:10px"><b>病人衛教重點：</b>很多症狀不頻繁的人以為自己「很輕微、不需要 ICS」。要說明——只用 SABA 治療的人仍可能發生嚴重甚至致死性發作；改用需要時低劑量 ICS-formoterol、需要時低劑量 ICS-SABA 或每日低劑量 ICS，可讓嚴重發作風險<b>降低一半到三分之二</b>。</div>
+  </div>
+</section>
+
+<!-- ============ TREATMENT ============ -->
+<section class="view" id="v-tx" hidden>
+  <div class="sec-title">治療階梯 <span class="en">Stepwise treatment</span></div>
+  <div class="sec-sub">所有氣喘病人都需要含 ICS 的治療；<b>不再建議單用 SABA</b>。GINA 2026 Figure 5–8、Table 3–4、Table 7。</div>
+
+  <div class="filterbar no-print">
+    <button class="opt" style="width:auto;padding:8px 16px" data-age="a12">成人／青少年 ≥12 歲</button>
+    <button class="opt" style="width:auto;padding:8px 16px" data-age="a611">兒童 6–11 歲</button>
+    <button class="opt" style="width:auto;padding:8px 16px" data-age="a5">幼兒 ≤5 歲</button>
+  </div>
+
+  <div id="txPanels"></div>
+
+  <div class="card pad" style="margin-top:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">調整治療的原則</h3>
+    <div class="grid2">
+      <div>
+        <p class="small" style="margin:0 0 6px"><b>升階前必查</b></p>
+        <ul class="tight small">
+          <li><b>順從性</b>、<b>吸入技巧</b>、<b>風險因子</b>、<b>共病</b>——四項先查完，再考慮升階或換藥</li>
+          <li>診斷是否正確？（COPD、聲帶功能異常、心衰竭、支氣管擴張症）</li>
+          <li>同一 step 內也可以換成其他選項，不一定要升階</li>
+          <li>兩條 Track 之間可以互換</li>
+        </ul>
+      </div>
+      <div>
+        <p class="small" style="margin:0 0 6px"><b>降階（控制良好 2–3 個月以上）</b></p>
+        <ul class="tight small">
+          <li>選對時機：<b>無呼吸道感染、非旅行期間、非懷孕</b></li>
+          <li>降階前記錄症狀控制與肺功能、提供書面行動計畫、密切監測並安排回診</li>
+          <li>維持性 ICS 劑量<b>減少 25–50%</b>（換較低單位含量或減少吸入次數）</li>
+          <li>每次降階後<b>等 2–3 個月</b>確認穩定再降下一階</li>
+          <li>成人與青少年<b>不可完全停掉 ICS</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-top:16px">
+    <h3 style="font-size:16px;margin-bottom:4px">Step 5：成人與青少年的重度氣喘 <span class="en">p.26</span></h3>
+    <p class="small muted" style="margin:0 0 12px">若 Step 4（Track 1 或 2）仍未控制：先評估原因並優化治療（含吸入技巧與順從性），再轉診做表現型、共病、風險因子與加成治療的評估。可取得痰液嗜酸性球檢驗時，對中重度氣喘的治療調整有幫助。</p>
+    <div class="grid2" style="margin-bottom:14px">
+      <div class="note"><b>高劑量 ICS-LABA</b> 偶爾需要，但<b>盡可能限制在 3–6 個月</b>，因為副作用（含腎上腺抑制）風險增加。</div>
+      <div class="note"><b>LAMA</b>：相較 ICS-LABA，加上 LAMA 稍微改善肺功能、稍微減少發作，但<b>對呼吸困難等症狀無臨床上重要的改善</b>。考慮加 LAMA 之前，先把 ICS 提高到至少中劑量，或改為 MART。</div>
+    </div>
+    <p class="small" style="margin:0 0 6px"><b>可用的 LAMA：</b></p>
+    <ul class="tight small" style="margin-bottom:14px">
+      <li>Tiotropium 獨立軟霧吸入器 — <b>≥6 歲</b></li>
+      <li>三合一 ICS-LABA-LAMA：budesonide-formoterol-glycopyrronium — <b>≥12 歲</b></li>
+      <li>三合一：beclometasone-formoterol-glycopyrronium、fluticasone furoate-vilanterol-umeclidinium、mometasone-indacaterol-glycopyrronium — <b>≥18 歲</b></li>
+    </ul>
+    <p class="small" style="margin:0 0 8px"><b>生物製劑</b>（在最大治療之上加成，需可取得且負擔得起）：</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:20%">標的</th><th style="width:34%">藥物</th><th>適應對象與年齡</th></tr></thead>
+        <tbody>
+          <tr><td><b>Anti-IgE</b></td><td>皮下 omalizumab，或生物相似藥 <b>omalizumab-igec</b> <span class="badge new">2026</span></td><td><b>≥6 歲</b>，重度<b>過敏型</b>氣喘</td></tr>
+          <tr><td><b>Anti-IL5 /<br>Anti-IL5Rα</b></td><td>靜脈 reslizumab<br>皮下 mepolizumab<br>皮下 benralizumab<br>皮下 <b>depemokimab</b> <span class="badge new">2026</span></td><td>重度<b>嗜酸性球型</b>氣喘<br>reslizumab <b>≥18 歲</b>；mepolizumab <b>≥6 歲</b>；benralizumab 與 depemokimab <b>≥12 歲</b></td></tr>
+          <tr><td><b>Anti-IL4Rα</b></td><td>皮下 dupilumab</td><td><b>≥6 歲</b>，重度嗜酸性球型／Type 2 氣道發炎，或<b>需要維持性口服類固醇</b>者</td></tr>
+          <tr><td><b>Anti-TSLP</b></td><td>皮下 tezepelumab</td><td><b>≥12 歲</b>，重度氣喘</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note crit" style="margin-top:14px"><b>維持性口服類固醇只能當最後手段</b>，並用最低可能劑量。短期與長期全身性副作用都常見且嚴重，所有病人都要監測<b>腎上腺抑制與骨質疏鬆</b>。加成治療的給付條件務必查核當地規範。</div>
+  </div>
+
+  <div class="grid2" style="margin-top:16px">
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">其他治療選項</h3>
+      <ul class="tight small">
+        <li><b>特定過敏原免疫療法（SLIT）</b>：成人／青少年有<b>塵蟎過敏</b>且含 ICS 治療下控制不佳者可考慮加用舌下免疫療法。<b>FEV₁ ≤70% 預測值者不可使用</b></li>
+        <li><b>LTRA</b>（montelukast、pranlukast、zafirlukast、zileuton）：效果不如每日 ICS，<b>預防急性發作方面尤其較差</b>。Montelukast 與<b>嚴重精神健康影響</b>有關</li>
+        <li>兒童 6–11 歲 Step 1–3：對有臨床相關致敏、控制不佳但穩定者，可考慮加成過敏原免疫療法</li>
+      </ul>
+    </div>
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">不建議的治療 <span class="en">Non-recommended</span></h3>
+      <ul class="tight small">
+        <li>維持性口服類固醇——僅限最後手段</li>
+        <li><b>口服 salbutamol、口服茶鹼、口服 epinephrine、吸入 fenoterol</b>——不良反應風險增加</li>
+        <li><b>規律使用 SABA</b>——1–2 週內即增加氣道過度反應與氣道發炎，並降低支氣管擴張反應</li>
+      </ul>
+      <div class="note small" style="margin-top:10px">使用<b>非 formoterol 的 LABA</b> 做每日 ICS-LABA 維持治療的病人，<b>不可</b>用 ICS-formoterol 當緩解劑，應改用 SABA 或 ICS-SABA。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ACUTE ============ -->
+<section class="view" id="v-acute" hidden>
+  <div class="sec-title">急性發作 <span class="en">Exacerbations</span></div>
+  <div class="sec-sub">GINA 2026 Figure 9（基層診所，成人／青少年／兒童 ≥6 歲）。急性發作的處理是從病人自我處置、基層診所、急診到住院的連續過程。</div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">評估病人 <span class="en">Assess</span></h3>
+    <ul class="tight small">
+      <li>目前症狀真的是氣喘造成的嗎？考慮<b>氣胸、過敏性休克、可誘發性喉阻塞、肺炎、急性心臟衰竭、肺栓塞</b></li>
+      <li>已經給了什麼治療？有無<b>氣喘死亡風險的紅旗</b>？</li>
+      <li>本次嚴重度？依下列臨床特徵判定；<b>&lt;18 歲請使用臨床評分（如 PRAM）</b><span class="badge new">2026</span></li>
+      <li>開始 SABA 與氧氣的<b>同時</b>進行評估：呼吸困難、呼吸速率、輔助肌使用、進氣量、脈搏速率、血氧飽和度、肺功能（PEF）</li>
+    </ul>
+    <div class="note" style="margin-top:12px">脈搏血氧儀在<b>膚色較深</b>的低血氧病人可能<b>高估</b>血氧飽和度；在<b>高海拔</b>（例如 1500–2000 m）正常飽和度本來就低於海平面，目標值應據此調整。</div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:12px">嚴重度判定 <span class="en">Figure 9</span></h3>
+    <div class="sev">
+      <div class="sevcard s1"><b class="t">輕度 Mild（須符合全部）</b><ul>
+        <li>可說完整句子、能平躺、不躁動</li>
+        <li>呼吸速率正常或僅輕微增快</li>
+        <li>無（或輕微）輔助肌使用</li>
+        <li>無（或輕微）呼氣喘鳴</li>
+        <li>進氣量正常</li>
+        <li>SpO₂（空氣）<b>≥94%</b></li>
+        <li>PEF <b>&gt;70%</b> 個人最佳值或預測值</li>
+        <li>&lt;18 歲：<b>PRAM 1–3</b></li></ul></div>
+      <div class="sevcard s2"><b class="t">中度 Moderate（參考特徵）</b><ul>
+        <li>只能說短句、偏好坐姿、不躁動</li>
+        <li>呼吸速率增快但 <b>≤30/min</b></li>
+        <li>有輔助肌使用</li>
+        <li>呼氣喘鳴</li>
+        <li>進氣量減少</li>
+        <li>SpO₂（空氣）<b>≥92%</b></li>
+        <li>PEF <b>50–70%</b></li>
+        <li>&lt;18 歲：<b>PRAM 4–7</b></li></ul></div>
+      <div class="sevcard s3"><b class="t">重度或危及生命（任一項即是）</b><ul>
+        <li><b>無法說話、喝水或平躺</b></li>
+        <li>SpO₂（空氣）<b>&lt;92%</b></li>
+        <li>呼吸速率 <b>&gt;30/min</b></li>
+        <li><b>安靜或無聲的胸廓</b></li>
+        <li>PEF <b>&lt;50%</b></li>
+        <li>&lt;18 歲：<b>PRAM 8–12</b></li>
+        <li style="margin-top:6px"><b>急性危及生命：</b>嗜睡、意識混亂、發紺（&lt;18 歲 PRAM 11–12）</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:12px">處置 <span class="en">Start treatment</span></h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:16%">嚴重度</th><th>處置</th></tr></thead>
+        <tbody>
+          <tr><td><b>輕度</b></td><td>Salbutamol <b>4 puffs</b> pMDI + spacer，<b>或 budesonide-formoterol 160/4.5 mcg 2 puffs</b> <span class="badge new">2026</span><br>評估反應，必要時 <b>30–60 分鐘後再給一次</b>。<b>輕度發作通常不需口服類固醇</b></td></tr>
+          <tr><td><b>中度</b></td><td>Salbutamol <b>4–6 puffs</b> pMDI + spacer（或 <b>2.5 mg 霧化</b>），必要時最多 <b>3 次</b>、間隔 20–30 分鐘<br>若需要且可取得 ipratropium：每次隨 salbutamol 給 <b>4 puffs</b>，最多 3 次<br><b>開始口服類固醇</b></td></tr>
+          <tr><td><b>重度／<br>危及生命</b></td><td><b>立即安排轉送急性照護機構，同時馬上開始治療</b><br>若同時有過敏性休克 → <b>先給 epinephrine</b>（IM 或鼻用）<br>Salbutamol <b>6–10 puffs</b> pMDI + spacer（或 <b>5 mg 霧化</b>），必要時每 20–30 分鐘重複<br>可取得時：每次隨 salbutamol 給 ipratropium <b>4 puffs</b><br><b>給氧，目標飽和度 92–95%</b>　<b>給全身性類固醇</b>　<b>持續監測</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="note info"><b>口服類固醇劑量（輕度發作除外）</b><br>成人：prednisolone <span class="dose">40–50 mg 每天早上 × 5–7 天</span><br>兒童：prednisolone <span class="dose">1–2 mg/kg/day（上限 40 mg）每天早上 × 3–5 天</span><br>使用少於 2 週時，<b>停藥前不需減量</b>。</div>
+      <div class="note"><b>不要做／不要給：</b>不常規做胸部 X 光或血液氣體分析、不常規開抗生素、<b>不使用鎮靜劑</b>。</div>
+    </div>
+    <div class="note" style="margin-top:12px"><b>pMDI + spacer 的正確給法：</b>Salbutamol 每 puff 100 mcg；ipratropium 每 puff 20 mcg。<b>用 spacer 一次只按一下</b>，太喘無法單次深吸後閉氣者改用<b>潮氣呼吸</b>。<b>Salbutamol 每次按壓前都要搖勻</b>。呼吸道感染或高度懷疑感染的病人<b>避免使用霧化器</b>。</div>
+    <div class="note info" style="margin-top:10px">在 FEV₁ &gt;30% 預測值的急診病人研究中，<b>高劑量 budesonide-formoterol 的效果與安全性與高劑量 salbutamol 相當</b>。</div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">1 小時內（或更早）複評</h3>
+      <ul class="tight small">
+        <li>評估血氧飽和度、呼吸速率、輔助肌使用、進氣量、PEF；&lt;18 歲重測 PRAM</li>
+        <li>必要時再給支氣管擴張劑並評估反應</li>
+        <li><b>惡化或未改善 → 轉送更高層級照護</b></li>
+        <li>是否住院依：臨床狀態、症狀與肺功能、治療反應、近期與過去發作史、在家自我處理能力</li>
+      </ul>
+    </div>
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">可返家的條件</h3>
+      <ul class="tight small">
+        <li>症狀與徵象改善，且<b>最後一次 salbutamol 後 1–2 小時內</b>符合「輕度」標準</li>
+        <li>空氣下 SpO₂ <b>≥92%</b></li>
+        <li>PEF 改善且 <b>&gt;70%</b> 個人最佳值或預測值</li>
+        <li>家中有足夠的照護資源</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">出院前必做</h3>
+      <ul class="tight small">
+        <li><b>記錄診斷</b>（若已確診）</li>
+        <li><b>開始或增加含 ICS 的治療</b>以降低再次發作風險——<b>≥12 歲優先使用 ICS-formoterol MART</b></li>
+        <li>緩解劑改為<b>需要時使用，不是規律使用</b></li>
+        <li>訓練吸入技巧（pMDI 要用 spacer），並強化順從性</li>
+        <li>若已開始口服類固醇，<b>依療程繼續服完</b></li>
+        <li>安排追蹤：<b>成人 2–7 天內；兒童 2–5 天內</b></li>
+        <li>確認有足夠的藥物到回診為止</li>
+      </ul>
+    </div>
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">追蹤時要做</h3>
+      <ul class="tight small">
+        <li>發作是否已緩解？若否，口服類固醇是否要繼續，或需轉急診？</li>
+        <li>確認病人<b>持續使用含 ICS 治療</b>；≥12 歲若尚未使用 ICS-formoterol，宜<b>改為 MART</b></li>
+        <li>確認緩解劑為需要時使用而非規律使用</li>
+        <li>檢查並矯正<b>吸入技巧與順從性</b></li>
+        <li>檢查並處理可調整的<b>風險因子</b></li>
+        <li>行動計畫：病人是否理解？是否需要修改？</li>
+        <li><b>過去一年若已使用超過 1 個療程口服類固醇 → 轉診專科</b></li>
+        <li>安排 2–3 個月內的下次回診</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card pad">
+    <h3 style="font-size:16px;margin-bottom:4px">書面氣喘行動計畫 <span class="en">Written asthma action plan</span></h3>
+    <p class="small muted" style="margin:0 0 12px">所有病人都應有書面、數位或圖示式的行動計畫（<b>不能只是口頭交代</b>）。內容須包含：平時的治療、氣喘惡化時要做什麼改變、何時就醫。</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:24%">目前的緩解劑</th><th>惡化時如何自我處置</th><th style="width:26%">何時就醫</th></tr></thead>
+        <tbody>
+          <tr><td><b>低劑量 ICS-formoterol</b><br><span class="muted small">成人／青少年 Track 1；兒童 6–11 歲 MART</span></td>
+              <td>需要時就多吸幾次 ICS-formoterol 緩解症狀。使用 MART 者<b>同時繼續原本的維持劑量</b></td>
+              <td>症狀快速惡化、<b>2–3 天未改善</b>，或 24 小時內需要<b>超過 12 吸</b> ICS-formoterol（formoterol 遞送劑量 54 mcg／標示劑量 72 mcg）</td></tr>
+          <tr><td><b>ICS-SABA</b><br><span class="muted small">成人／青少年 Track 2</span></td>
+              <td>每次多吸 <b>2 吸</b> ICS-SABA（budesonide-salbutamol 100/100 mcg，遞送劑量 80/90 mcg），並<b>繼續原本的含 ICS 維持治療</b></td>
+              <td>快速惡化、2–3 天未改善，或<b>一天內需要超過 6 次</b></td></tr>
+          <tr><td><b>SABA</b><br><span class="muted small">成人／青少年 Track 2；兒童 6–11 歲</span></td>
+              <td>需要時使用 SABA（不規律使用），並把含 ICS 的維持治療<b>增加至少 1–2 週</b>。成人可考慮把維持性 ICS 加到<b>平常劑量的 4 倍</b>，為期 1–2 週</td>
+              <td><b>3 小時內又需要用 SABA</b>，或症狀快速惡化／未改善</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="hr"></div>
+    <p class="small" style="margin:0 0 6px"><b>行動計畫中可考慮開始口服類固醇的情況：</b></p>
+    <ul class="tight small">
+      <li>用了更多緩解劑，症狀仍在 <b>2–3 天內持續惡化</b></li>
+      <li>症狀<b>快速惡化</b></li>
+      <li>肺功能低下：<b>FEV₁ &lt;60% 預測值</b>或 <b>PEF &lt;60% 個人最佳值</b></li>
+      <li>病人<b>有突發嚴重發作病史</b>且症狀正在惡化</li>
+    </ul>
+    <div class="note" style="margin-top:12px">若病人手上有備用的口服類固醇處方，<b>應告知盡可能在服用前先聯絡醫師</b>。並衛教常見副作用：睡眠障礙、食慾增加、胃食道逆流、情緒變化。<br>口服類固醇在嚴重發作時可救命，但<b>每一個療程都會累積副作用風險</b>——透過優化吸入治療（注意技巧與順從性）、以及改用 Track 1 的 ICS-formoterol，可以減少療程需求。</div>
+  </div>
+</section>
+
+<!-- ============ DOSE ============ -->
+<section class="view" id="v-dose" hidden>
+  <div class="sec-title">劑量表 <span class="en">Reference tables</span></div>
+  <div class="sec-sub">GINA 2026 Table 6（ICS 劑量分級）與 Table 7（AIR/MART 吸入器與劑量）。</div>
+
+  <div class="note info" style="margin-bottom:16px">此表列出的是<b>低／中／高劑量的分組，不是等效換算表</b>，且為<b>標示劑量（metered dose）</b>。各國可取得的規格、藥證與標示方式可能不同；使用新藥或學名藥、或含 LAMA 的產品時，<b>務必核對仿單</b>。同一 ICS 分子的不同製劑不一定臨床等效（例如加上 LAMA 時 mometasone 劑量會改變）。</div>
+
+  <div class="filterbar no-print">
+    <input id="doseSearch" placeholder="搜尋藥名（例如 budesonide、fluticasone、mometasone）…">
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">成人與青少年 — 每日 ICS 總劑量（mcg）</h3>
+    <div class="tbl-wrap"><table id="tblAdult">
+      <thead><tr><th>吸入型類固醇</th><th>低 Low</th><th>中 Medium</th><th>高 High</th></tr></thead><tbody></tbody>
+    </table></div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">兒童 6–11 歲 — 每日 ICS 總劑量（mcg）</h3>
+    <div class="tbl-wrap"><table id="tblChild">
+      <thead><tr><th>吸入型類固醇</th><th>低 Low</th><th>中 Medium</th><th>高 High</th></tr></thead><tbody></tbody>
+    </table></div>
+    <div class="note" style="margin-top:12px"><b>低劑量 ICS 就能提供多數病人絕大部分的臨床效益。</b>部分病人對 ICS 反應較差，在順從性良好、吸入技巧正確、使用低劑量仍未控制時才需要中劑量。<b>高劑量 ICS 很少需要</b>，長期使用會增加局部與全身副作用風險。<br>使用 pMDI 給 ICS 時<b>應搭配 spacer</b>；表中所有 pMDI 均為 HFA 推進劑。</div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:4px">AIR / MART 建議吸入器與劑量 <span class="en">Table 7</span></h3>
+    <p class="small muted" style="margin:0 0 12px">需要時使用 ICS-formoterol：有症狀就吸 <b>1 吸</b>；幾分鐘後未改善可再吸一次。<b>不需要等固定時數</b>才能再吸，但若單日所需吸數超過下表上限就要就醫。也可在<b>運動前或接觸過敏原前</b>使用，取代 SABA。</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:38%">藥物（mcg/吸）</th><th style="width:20%">階段</th><th>用法</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="4"><b>兒童 6–11 歲</b><br>Budesonide-formoterol DPI 或 pMDI <b>80/4.5 (100/6)</b><br>或 beclometasone-formoterol DPI 或 pMDI <b>100/6</b><br><span class="muted small">24 小時內總吸數 &gt;8 吸 → 就醫</span></td><td>Step 1–2 AIR-only</td><td>需要時 1 吸</td></tr>
+          <tr><td>Step 3 MART</td><td><b>每日 1 次 1 吸</b> ＋ 需要時 1 吸</td></tr>
+          <tr><td>Step 4 MART</td><td><b>每日 2 次、每次 1 吸</b> ＋ 需要時 1 吸</td></tr>
+          <tr><td>Step 5 MART</td><td><b>不建議</b></td></tr>
+          <tr><td rowspan="3"><b>青少年 12–17 歲／成人 ≥18 歲</b><br>Budesonide-formoterol DPI 或 pMDI <b>160/4.5 (200/6)</b><br>或 beclometasone-formoterol DPI 或 pMDI <b>100/6</b><br><span class="muted small">24 小時內總吸數 &gt;12 吸 → 就醫</span></td><td>Step 1–2 AIR-only</td><td>需要時 1 吸</td></tr>
+          <tr><td>Step 3 MART</td><td><b>每日 2 次（或 1 次）、每次 1 吸</b> ＋ 需要時 1 吸</td></tr>
+          <tr><td>Step 4–5 MART</td><td><b>每日 2 次、每次 2 吸</b> ＋ 需要時 1 吸</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted" style="margin:12px 0 0">Budesonide-formoterol 以<b>遞送劑量</b>標示（括號為標示劑量），beclometasone-formoterol 以<b>標示劑量</b>標示。BDP-formoterol 100/6 的遞送劑量為 pMDI 84.6/5、DPI 81.9/5 mcg。<br><b>成人：目前沒有 beclometasone-formoterol 單獨作為需要時治療的研究。</b>以 BDP-formoterol 做 MART 時，GINA 認為必要時單日可暫時用到 12 吸（依據 formoterol 的大量安全性資料）。</p>
+  </div>
+
+  <div class="card pad">
+    <h3 style="font-size:16px;margin-bottom:10px">幼兒 ≤5 歲：低劑量 ICS 參考值 <span class="badge src">完整報告</span></h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>藥物</th><th>每日低劑量（mcg）</th></tr></thead>
+      <tbody>
+        <tr><td>Beclometasone dipropionate（pMDI，標準顆粒，HFA）</td><td>100</td></tr>
+        <tr><td>Budesonide 霧化液 nebulized</td><td>500</td></tr>
+        <tr><td>Fluticasone propionate（pMDI，標準顆粒，HFA）</td><td>100</td></tr>
+        <tr><td>Ciclesonide（pMDI，超細顆粒，HFA）</td><td>160</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note" style="margin-top:12px">2026 Summary Guide <b>未涵蓋</b> ≤5 歲，此表取自 GINA 完整報告，<b>使用前請核對完整報告</b>。此年齡層一律使用 <b>pMDI + 附面罩的儲霧艙</b>，且<b>不建議常規使用高劑量 ICS</b>。</div>
+  </div>
+</section>
+
+<!-- ============ REF ============ -->
+<section class="view" id="v-ref" hidden>
+  <div class="sec-title">GINA 2026 更新重點與參考資料</div>
+  <div class="sec-sub">本工具內容已與 GINA 2026 Summary Guide（2026 年 7 月版）逐項核對。</div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">診斷</h3>
+      <ul class="tight small">
+        <li>診斷流程圖（Figure 1）<b>簡化</b></li>
+        <li>指出 ERS/ATS 2022 的支氣管擴張劑反應標準（&gt;10% predicted）可能造成<b>低診斷</b>；GINA 維持 ≥12% 且 ≥200 mL</li>
+        <li>Table 1 明確以 <b>成人 ≥18 歲 / 兒童 6–17 歲</b>分界（與治療階梯的 12 歲分界不同）</li>
+      </ul>
+      <h3 style="font-size:16px;margin:16px 0 10px">評估工具 <span class="badge new">新</span></h3>
+      <ul class="tight small">
+        <li><b>CAAT</b>（Chronic Airways Assessment Test）：8 題，成人</li>
+        <li><b>Peds-AIRQ</b>：5–11 歲，合併症狀與發作風險</li>
+        <li><b>PRAM</b>：&lt;18 歲急性發作嚴重度評分</li>
+      </ul>
+    </div>
+    <div class="card pad">
+      <h3 style="font-size:16px;margin-bottom:10px">治療</h3>
+      <ul class="tight small">
+        <li><b>Track 2 Step 1 改為 AIR-only</b>：需要時低劑量 ICS+SABA（複方或分開吸入器）。BATURA 研究顯示相較單用 SABA，嚴重發作風險減少近一半</li>
+        <li><b>兒童 6–11 歲 Step 1 改為 AIR-only</b>：需要時低劑量 ICS-formoterol 或需要時低劑量 ICS+SABA（CARE 研究）</li>
+        <li>Step 5 <b>LAMA</b> 證據更新，新增三合一 budesonide-formoterol-glycopyrronium（≥12 歲）</li>
+        <li>新生物製劑：<b>depemokimab</b>（anti-IL5，≥12 歲）、生物相似藥 <b>omalizumab-igec</b></li>
+      </ul>
+      <h3 style="font-size:16px;margin:16px 0 10px">急性發作</h3>
+      <ul class="tight small">
+        <li>新流程圖，嚴重度統一為<b>輕度／中度／重度或危及生命</b>，並列出各級的明確判準</li>
+        <li><b>ICS-formoterol 新增</b>為輕度發作的處置選項（budesonide-formoterol 160/4.5 2 puffs）</li>
+        <li>SABA 劑量分級明確化（輕 4 / 中 4–6 / 重 6–10 puffs）</li>
+        <li>&lt;18 歲<b>強烈建議</b>使用 PRAM 評分</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">非藥物處置與特殊族群</h3>
+    <div class="grid2">
+      <ul class="tight small">
+        <li><b>戒菸／避免二手菸</b>；肺復健、體能活動、減重</li>
+        <li><b>疫苗</b>：肺炎鏈球菌、百日咳、COVID-19、流感、<b>RSV</b>，依當地年齡層建議</li>
+        <li><b>職業性氣喘</b>：早期辨識、完全移除暴露</li>
+        <li><b>懷孕、高齡、食物過敏與過敏性休克、手術</b>：各有專節考量</li>
+      </ul>
+      <ul class="tight small">
+        <li><b>控制良好的氣喘病人</b>罹患重症 COVID-19 或相關死亡的風險<b>不高於一般人</b>；但近期需要口服類固醇或因嚴重氣喘住院者風險較高</li>
+        <li>呼吸道病毒流行期間：<b>繼續使用 ICS</b>，確保每人都有書面行動計畫</li>
+        <li>感染或疑似感染者<b>避免用霧化器</b>，改用 pMDI + spacer；確診／疑似 COVID-19 者<b>避免做肺量計</b></li>
+        <li>開立 COVID-19 抗病毒藥前，<b>查核與氣喘用藥的交互作用</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-bottom:16px">
+    <h3 style="font-size:16px;margin-bottom:10px">台灣在地補充</h3>
+    <ul class="tight small">
+      <li>台灣胸腔暨重症加護醫學會《台灣成人氣喘診療指引》架構與 GINA 一致（症狀控制四題、Step 1–5）</li>
+      <li>常見藥品：Symbicort／Fostair（ICS-formoterol，可做 MART）、Seretide／Relvar（ICS-LABA）、Trelegy／Trimbow（三合一）、Ventolin／Berotec（SABA）</li>
+      <li><b>健保氣喘醫療給付改善方案</b>有收案、追蹤與品質指標要求</li>
+      <li>生物製劑在台給付條件與 GINA 建議不完全相同，處方前須查核健保規範</li>
+    </ul>
+  </div>
+
+  <div class="card pad">
+    <h3 style="font-size:16px;margin-bottom:10px">參考資料</h3>
+    <ul class="tight small">
+      <li><b>主要依據：</b>Global Initiative for Asthma. <i>Summary Guide for Asthma Management and Prevention, 2026.</i> <a href="https://ginasthma.org/wp-content/uploads/2026/07/GINA-Summary-Guide-2026-WEB-WMS.pdf" target="_blank" rel="noopener">PDF</a></li>
+      <li>GINA. <i>Global Strategy for Asthma Management and Prevention, 2026 Update.</i> <a href="https://ginasthma.org/wp-content/uploads/2026/05/GINA-2026-Strategy-Report-WMS.pdf" target="_blank" rel="noopener">PDF</a>（≤5 歲、生物標記細節、Box 編號等以完整報告為準）</li>
+      <li>GINA. <i>Difficult-to-treat and severe asthma in adolescent and adult patients</i>（重度氣喘專冊）<a href="https://ginasthma.org/" target="_blank" rel="noopener">ginasthma.org</a></li>
+      <li>台灣胸腔暨重症加護醫學會《台灣成人氣喘診療指引》 <a href="https://asthma-copd.tw/med-asthma/content/2-%E5%8F%B0%E7%81%A3%E6%88%90%E4%BA%BA%E6%B0%A3%E5%96%98%E8%A8%BA%E7%99%82%E6%8C%87%E5%BC%95.pdf" target="_blank" rel="noopener">PDF</a>　·　《兒童氣喘診療指引》 <a href="https://asthma-copd.tw/med-asthma/content/3.%E5%85%92%E7%AB%A5%E6%B0%A3%E5%96%98%E8%A8%BA%E7%99%82%E6%8C%87%E5%BC%95.pdf" target="_blank" rel="noopener">PDF</a></li>
+    </ul>
+    <div class="hr"></div>
+    <p class="small muted" style="margin:0"><b>縮寫：</b>AIR 抗發炎緩解劑（ICS ＋ 快速作用支氣管擴張劑的複方）· MART 維持與緩解合併療法 · ICS 吸入型類固醇 · LABA 長效乙型作用劑 · LAMA 長效抗膽鹼劑 · SABA 短效乙型作用劑 · LTRA 白三烯素受體拮抗劑 · OCS 口服類固醇 · FeNO 呼氣一氧化氮 · TSLP 胸腺基質淋巴生成素 · SLIT 舌下免疫療法 · HDM 塵蟎 · PRAM Pediatric Respiratory Assessment Measure · pMDI 加壓定量吸入器 · DPI 乾粉吸入器</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  本工具依 GINA 2026 Summary Guide for Asthma Management and Prevention 及台灣氣喘診療指引整理，供<b>醫療專業人員</b>臨床參考之用，不能取代個別臨床判斷、完整病史評估或當地給付規範。藥物劑量請於處方前核對原始指引與仿單。與 GINA 無隸屬關係。最後核對日期：2026-08-16。
+</footer>
+
+<script>
+const tabs=[...document.querySelectorAll('nav.tabs button')];
+tabs.forEach(b=>b.addEventListener('click',()=>{
+  tabs.forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.hidden = v.id!==b.dataset.view);
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+
+/* ---- Table 6 (verbatim from GINA 2026 Summary Guide p.44) ---- */
+const ADULT=[
+ ["Beclometasone dipropionate（pMDI）","200–500","&gt;500–1000","&gt;1000"],
+ ["Beclometasone dipropionate（DPI 或 pMDI，超細顆粒）","100–200","&gt;200–400","&gt;400"],
+ ["Budesonide（DPI 或 pMDI）","200–400","&gt;400–800","&gt;800"],
+ ["Ciclesonide（pMDI，超細顆粒）","80–160","&gt;160–320","&gt;320"],
+ ["Fluticasone furoate（DPI）","100","—","200"],
+ ["Fluticasone propionate（DPI）","100–250","&gt;250–500","&gt;500"],
+ ["Fluticasone propionate（pMDI）","100–250","&gt;250–500","&gt;500"],
+ ["Mometasone furoate（DPI）","<span class='muted'>依 DPI 裝置而異</span>","",""],
+ ["Mometasone furoate（pMDI）","200–400","—","400"]
+];
+const CHILD=[
+ ["Beclometasone dipropionate（pMDI）","100–200","&gt;200–400","&gt;400"],
+ ["Beclometasone dipropionate（pMDI，超細顆粒）","50–100","&gt;100–200","&gt;200"],
+ ["Budesonide（DPI）","100–200","&gt;200–400","&gt;400"],
+ ["Budesonide（霧化液 nebules）","250–500","&gt;500–1000","&gt;1000"],
+ ["Ciclesonide（pMDI，超細顆粒）","80","&gt;80–160","&gt;160"],
+ ["Fluticasone furoate（DPI）","50","—","—"],
+ ["Fluticasone propionate（DPI）","50–100","&gt;100–200","&gt;200"],
+ ["Fluticasone propionate（pMDI）","50–100","&gt;100–200","&gt;200"],
+ ["Mometasone furoate（pMDI）","100","—","200"]
+];
+function fillDose(id,rows){
+  document.querySelector('#'+id+' tbody').innerHTML=rows.map(r=>
+    r[2]===''&&r[3]===''
+    ? `<tr><td><b>${r[0]}</b></td><td colspan="3">${r[1]}</td></tr>`
+    : `<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+}
+fillDose('tblAdult',ADULT); fillDose('tblChild',CHILD);
+document.getElementById('doseSearch').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  ['tblAdult','tblChild'].forEach(id=>{
+    [...document.querySelectorAll('#'+id+' tbody tr')].forEach(tr=>{
+      tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+});
+</script>
+<script>
+/* ================= regimen data — GINA 2026 Figures 5–8, Table 7 ================= */
+const RX = {
+  a12:{
+    label:'成人／青少年 ≥12 歲',
+    reliever:{t1:'全程緩解劑：需要時低劑量 ICS-formoterol',t2:'全程緩解劑：需要時低劑量 ICS-SABA（若無法取得，則需要時 SABA）'},
+    t1:{
+      name:'Track 1（優先）· ICS-formoterol 作為抗發炎緩解劑',
+      note:'各階段病人都用低劑量 ICS-formoterol 緩解症狀；Step 3–5 同一支吸入器也是維持治療。<b>單一藥物、單一裝置、單一劑量</b>貫穿各階段。相較 SABA 緩解劑，可降低急性發作風險。也可在運動前或接觸過敏原前使用。',
+      steps:[
+        {t:'Step 1–2 · AIR-only', d:'需要時低劑量 ICS-formoterol', ex:'budesonide-formoterol 160/4.5 (200/6) 或 BDP-formoterol 100/6，需要時 1 吸', add:'臨床試驗中，相較單用 SABA 可使氣喘相關急診就醫或住院<b>減少約 2/3</b>；相較低劑量 ICS ＋ 需要時 SABA 減少超過 1/3。'},
+        {t:'Step 1–2 · AIR-only', d:'需要時低劑量 ICS-formoterol', ex:'budesonide-formoterol 160/4.5 (200/6) 或 BDP-formoterol 100/6，需要時 1 吸', add:'無每日維持治療。'},
+        {t:'Step 3 · MART', d:'低劑量 ICS-formoterol MART', ex:'早晚各 1 吸（或每日 1 次 1 吸）維持 ＋ 需要時 1 吸', add:'MART 在有或沒有嚴重發作病史的病人，都比其他維持治療＋需要時 SABA 更能減少嚴重發作，症狀控制相當。<b>不含 formoterol 的 ICS-LABA 不能做 MART。</b>'},
+        {t:'Step 4 · MART', d:'中劑量 ICS-formoterol MART', ex:'早晚各 2 吸維持 ＋ 需要時 1 吸', add:'24 小時內總吸數超過 12 吸就要就醫。'},
+        {t:'Step 5', d:'考慮加成 LAMA；轉診做<b>表現型評估</b>；可考慮試用高劑量維持 ICS-formoterol；考慮 anti-IgE、anti-IL5/5R、anti-IL4Rα、anti-TSLP', ex:'—', add:'高劑量 ICS-LABA 盡可能限制在 3–6 個月。維持性口服類固醇僅限最後手段。'}
+      ]
+    },
+    t2:{
+      name:'Track 2（替代）· ICS-SABA 或 SABA 緩解劑',
+      note:'ICS-formoterol 無法取得時的替代方案；或病人以目前含 ICS 維持治療穩定、無發作、規律使用且希望延續時亦可考慮。<b>考慮 SABA 緩解劑的處方之前，先評估病人是否可能規律使用 ICS</b>——順從性差的人會變成暴露在 SABA-only 治療下，發作風險更高。',
+      steps:[
+        {t:'Step 1 · AIR-only', d:'需要時低劑量 ICS＋SABA（複方或分開吸入器）', ex:'複方 budesonide-salbutamol；或使用 SABA 時立即吸一劑低劑量 ICS', add:'<span class="badge new">2026 新增</span> 相較單用 SABA 緩解劑可降低嚴重發作風險。分開吸入器指的是「每次用 SABA 時就吸一劑 ICS」。'},
+        {t:'Step 2', d:'每日低劑量維持 ICS', ex:'低劑量見「劑量表」分頁', add:'每天使用 ICS（即使低劑量）能大幅降低嚴重發作、住院與氣喘死亡風險——但順從性通常很差。'},
+        {t:'Step 3', d:'每日低劑量維持 ICS-LABA', ex:'—', add:'維持藥與緩解藥若是不同裝置，或換階需要換裝置，務必重新訓練吸入技巧。'},
+        {t:'Step 4', d:'每日中劑量維持 ICS-LABA', ex:'—', add:'Step 2–5 需要<b>兩支吸入器</b>，務必確認病人分得清維持藥與緩解藥。'},
+        {t:'Step 5', d:'考慮加成 LAMA；轉診做<b>表現型評估</b>；可考慮試用高劑量維持 ICS-LABA；考慮 anti-IgE、anti-IL5/5R、anti-IL4Rα、anti-TSLP', ex:'—', add:'高劑量 ICS-LABA 盡可能限制在 3–6 個月。'}
+      ]
+    }
+  },
+  a611:{
+    label:'兒童 6–11 歲',
+    reliever:{t1:'全程緩解劑：需要時低劑量 ICS-formoterol 或需要時低劑量 ICS-SABA；若無 AIR，則需要時 SABA'},
+    t1:{
+      name:'兒童 6–11 歲 · 階梯治療 <span class="en">Figure 8</span>',
+      note:'6–11 歲兒童<b>不可單用 SABA</b>，都應接受含 ICS 的治療。依個別孩子的需求上下調整。Step 4 的 MART 劑量是 Step 3 的兩倍（仍屬低每日劑量）。',
+      steps:[
+        {t:'Step 1 · AIR-only', d:'需要時低劑量 ICS-formoterol，<b>或</b>需要時低劑量 ICS＋SABA（複方或分開吸入器）', ex:'budesonide-formoterol 80/4.5 (100/6) 或 BDP-formoterol 100/6，需要時 1 吸', add:'<span class="badge new">2026 新增</span> 依 CARE 研究納入需要時低劑量 budesonide-formoterol。'},
+        {t:'Step 2', d:'每日低劑量吸入型類固醇（ICS）', ex:'例：budesonide DPI 100–200 mcg/day', add:'其他選項（適應症有限或療效／安全性證據較少）：需要時低劑量 ICS-formoterol、需要時低劑量 ICS-SABA，或<b>每日 LTRA</b>。'},
+        {t:'Step 3', d:'<b>中劑量 ICS</b>　或　<b>低劑量 ICS-LABA</b>　或　<b>低劑量 ICS-formoterol MART</b>', ex:'MART：每日 1 次 1 吸 ＋ 需要時 1 吸', add:'其他選項：低劑量 ICS ＋ LTRA。開立 LTRA 時注意<b>神經精神不良反應</b>。'},
+        {t:'Step 4', d:'<b>中劑量 ICS-LABA</b>　或　<b>低劑量 ICS-formoterol MART</b>　或　<b>轉診專科</b>', ex:'MART：每日 2 次、每次 1 吸 ＋ 需要時 1 吸', add:'其他選項：在 Step 3 的首選控制藥上加 <b>tiotropium</b> 或 <b>LTRA</b>。'},
+        {t:'Step 5', d:'<b>轉診做表現型評估</b>；考慮更高劑量 ICS-LABA，或加成治療如 <b>LAMA、anti-IgE、anti-IL4Rα、anti-IL5</b>', ex:'—', add:'此年齡層<b>不建議</b>使用 Step 5 MART。'}
+      ]
+    }
+  },
+  a5:{
+    label:'幼兒 ≤5 歲',
+    reliever:{t1:'緩解劑：需要時 SABA（pMDI ＋ 附面罩儲霧艙）'},
+    t1:{
+      name:'幼兒 ≤5 歲 · 階梯治療 <span class="badge src">取自 GINA 完整報告</span>',
+      note:'2026 Summary Guide <b>未涵蓋</b>此年齡層，以下取自 GINA 完整報告，使用前請核對原文。一律使用 <b>pMDI ＋ 附面罩的儲霧艙</b>。治療試驗 2–3 個月後評估；若無效，先重新檢視<b>診斷、吸入技巧、順從性</b>再升階。',
+      steps:[
+        {t:'Step 1', d:'需要時 SABA（± 每次使用 SABA 時併用 ICS）', ex:'salbutamol pMDI + spacer', add:'症狀不頻繁、無風險因子者。'},
+        {t:'Step 2', d:'<b>每日低劑量 ICS</b>（首選）', ex:'BDP 100 mcg/day、FP 100 mcg/day、budesonide 霧化液 500 mcg/day', add:'替代：每日 LTRA（效果較弱）或間歇性 ICS。連續給 3 個月後評估。'},
+        {t:'Step 3', d:'<b>低劑量 ICS 加倍</b>', ex:'—', add:'升階前務必先評估診斷、吸入技巧與順從性。'},
+        {t:'Step 4', d:'續用並<b>轉診兒童專科</b>評估', ex:'—', add:'此年齡層不建議常規使用高劑量 ICS。'}
+      ]
+    }
+  }
+};
+
+/* ---- Table 3 / Table 4: suggested INITIAL treatment ---- */
+const INIT_A12=[
+  {q:'症狀不頻繁（例如每週 ≤2 天）', t1:'需要時低劑量 ICS-formoterol', t2:'需要時低劑量 ICS＋SABA（複方或分開吸入器）', step:1},
+  {q:'症狀每週少於 3–5 天，肺功能正常或僅輕微下降', t1:'需要時低劑量 ICS-formoterol', t2:'每日規律低劑量 ICS ＋ 需要時低劑量 ICS-SABA 或 SABA', step:2},
+  {q:'多數日子有症狀（每週 ≥4 天），或每週 ≥1 次因氣喘夜間醒來，<b>或</b>肺功能低下', t1:'低劑量 ICS-formoterol MART', t2:'每日規律低劑量 ICS-LABA ＋ 需要時低劑量 ICS-SABA 或 SABA', step:3},
+  {q:'每天有症狀，或每週 ≥1 次夜間醒來，<b>且</b>肺功能低下或近期曾發作', t1:'中劑量 ICS-formoterol MART', t2:'每日規律中劑量 ICS-LABA ＋ 需要時低劑量 ICS-SABA 或 SABA', step:4},
+  {q:'初次就診時正處於急性發作', t1:'先處理急性發作（嚴重者含短療程口服類固醇），並開始<b>中劑量 MART</b>', t2:'先處理急性發作，並開始<b>中劑量 ICS-LABA</b> ＋ 需要時低劑量 ICS-SABA 或 SABA', step:4}
+];
+const INIT_A611=[
+  {q:'症狀不頻繁（例如每週 ≤2 天）', t1:'需要時低劑量 ICS-formoterol，或需要時低劑量 ICS-SABA，或每次用 SABA 時併用低劑量 ICS', step:1},
+  {q:'症狀每週 3–4 天', t1:'每日低劑量 ICS 維持治療 ＋ 需要時 SABA 或 ICS-SABA', step:2},
+  {q:'多數日子有症狀（例如每週 4–5 天），或每週 ≥1 次夜間醒來，或肺功能低下', t1:'低劑量維持 ICS ＋ 需要時 SABA/ICS-SABA　<b>或</b>　中劑量維持 ICS ＋ 需要時 SABA/ICS-SABA　<b>或</b>　低劑量 ICS-formoterol MART', step:3},
+  {q:'每天有症狀，或每週 ≥1 次夜間醒來，<b>且</b>肺功能低下或近期曾發作', t1:'中劑量維持 ICS-LABA ＋ 需要時 SABA　<b>或</b>　低劑量 ICS-formoterol MART', step:4},
+  {q:'初次就診時正處於急性發作', t1:'先處理急性發作，再開始：中劑量維持 ICS-LABA ＋ 需要時 SABA，或低劑量 ICS-formoterol MART', step:4}
+];
+
+/* ================= treatment reference panels ================= */
+function renderTx(age){
+  const g=RX[age]; let h='';
+  const blocks = age==='a12' ? [['t1',g.t1],['t2',g.t2]] : [['t1',g.t1]];
+  blocks.forEach(([k,tr])=>{
+    h+=`<div class="card pad" style="margin-bottom:16px">
+      <h3 style="font-size:16px;margin-bottom:6px">${tr.name}</h3>
+      <p class="small muted" style="margin:0 0 14px">${tr.note}</p>
+      <div class="ladder">`;
+    tr.steps.forEach((s,i)=>{
+      if(age==='a12'&&i===0&&k==='t1') return;
+      h+=`<div class="rung ${k}"><h5>${s.t}</h5><span class="main">${s.d}</span>
+        ${s.ex!=='—'?`<div class="muted" style="margin-top:5px">${s.ex}</div>`:''}
+        ${s.add&&s.add!=='—'?`<div class="muted" style="margin-top:5px;font-size:12.5px">${s.add}</div>`:''}
+      </div>`;
+    });
+    h+=`</div><div class="note info small" style="margin-top:12px">${g.reliever[k]}</div></div>`;
+  });
+  // initial treatment table
+  const INIT = age==='a12'?INIT_A12 : age==='a611'?INIT_A611 : null;
+  if(INIT){
+    h+=`<div class="card pad" style="margin-bottom:16px"><h3 style="font-size:16px;margin-bottom:4px">建議的<b>初始</b>治療 <span class="en">${age==='a12'?'Table 3':'Table 4'}</span></h3>
+      <p class="small muted" style="margin:0 0 12px">確診後應立即開始最合適的治療，依病人的氣喘病史與目前症狀決定。</p>
+      <div class="tbl-wrap"><table><thead><tr><th style="width:34%">表現的症狀</th><th>${age==='a12'?'首選初始治療（Track 1）':'首選初始治療'}</th>${age==='a12'?'<th>替代初始治療（Track 2）</th>':''}</tr></thead><tbody>`;
+    INIT.forEach(r=>{ h+=`<tr><td>${r.q}</td><td>${r.t1}</td>${age==='a12'?`<td>${r.t2}</td>`:''}</tr>`; });
+    h+=`</tbody></table></div>
+      <div class="note small" style="margin-top:12px">開始治療時同時要做：<b>記錄氣喘診斷的依據</b> · <b>記錄症狀控制與風險因子</b> · 可行時<b>評估肺功能</b> · <b>訓練病人（與家長）正確使用吸入器並檢查技巧</b> · <b>安排回診</b>。</div></div>`;
+  }
+  document.getElementById('txPanels').innerHTML=h;
+  document.querySelectorAll('[data-age]').forEach(b=>b.classList.toggle('sel',b.dataset.age===age));
+}
+document.querySelectorAll('[data-age]').forEach(b=>b.addEventListener('click',()=>renderTx(b.dataset.age)));
+renderTx('a12');
+
+/* ================= wizard ================= */
+const S={scenario:null,age:null,sx:[],obj:{},dxClin:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[]};
+const box=document.getElementById('wizbox'), prog=document.getElementById('prog');
+let idx=0;
+const SCEN={
+  dx:{steps:['情境','年齡','症狀型態','客觀檢查','結果']},
+  tx:{steps:['情境','年齡','控制程度','風險因子','目前治療','結果']},
+  ac:{steps:['情境','年齡','嚴重度','結果']}
+};
+function flow(){ return S.scenario? SCEN[S.scenario].steps : ['情境','…','…']; }
+function drawProg(){
+  prog.innerHTML=flow().map((s,i)=>`<div class="pdot ${i<idx?'done':i===idx?'cur':''}"><i></i><span>${s}</span></div>`).join('<div class="psep"></div>');
+}
+
+const SX=[
+ '有典型氣喘症狀：喘鳴、呼吸短促、胸悶或咳嗽',
+ '症狀的<b>頻率與強度會變化</b>',
+ '常在<b>夜間或起床時</b>發生或加重',
+ '常由<b>運動、大笑、過敏原或冷空氣</b>誘發',
+ '<b>用力後症狀加重</b>（極具特異性）',
+ '常在<b>病毒性呼吸道感染</b>時發生或加重'
+];
+const SX_NEG='單獨慢性咳嗽 · 慢性大量痰液 · 呼吸困難合併頭暈或針刺感 · 運動時胸痛 · 吸氣性喘鳴（stridor）';
+const CTRLQ=[
+ '<b>日間症狀</b>每週超過 2 次？',
+ '曾因氣喘<b>夜間醒來</b>？',
+ '需要 <b>SABA 緩解藥</b>每週超過 2 次？',
+ '因氣喘造成<b>活動受限</b>？'
+];
+const RISKS=[
+ 'SABA 過度使用（每年 ≥3 支 200 劑裝；每月 ≥1 支風險更高）',
+ 'ICS 不足：未使用、順從性差或吸入技巧錯誤',
+ '共病：肥胖、慢性鼻竇炎、胃食道逆流、確診食物過敏，或懷孕',
+ '暴露：已致敏的過敏原、抽菸、電子菸、空氣污染',
+ '重大心理或社會經濟問題',
+ '肺功能差（尤其 FEV₁ &lt;60% 預測值），或支氣管擴張劑反應幅度大',
+ 'Type 2 發炎指標偏高：血液嗜酸性球、FeNO',
+ '過去一年曾嚴重發作',
+ '終生曾因氣喘插管或進加護病房'
+];
+const ACUTE_SIGNS=[
+ ['<b>無法說話、喝水或平躺</b>','sev'],
+ ['SpO₂（空氣）<b>&lt;92%</b>','sev'],
+ ['呼吸速率 <b>&gt;30/min</b>','sev'],
+ ['<b>安靜或無聲的胸廓</b>','sev'],
+ ['PEF <b>&lt;50%</b> 個人最佳值或預測值','sev'],
+ ['&lt;18 歲：<b>PRAM 8–12</b>','sev'],
+ ['<b>嗜睡</b>','life'],
+ ['<b>意識混亂</b>','life'],
+ ['<b>發紺</b>','life'],
+ ['&lt;18 歲：<b>PRAM 11–12</b>','life'],
+ ['只能說短句、偏好坐姿','mod'],
+ ['呼吸速率增快但 ≤30/min','mod'],
+ ['使用輔助呼吸肌','mod'],
+ ['呼氣喘鳴','mod'],
+ ['進氣量減少','mod'],
+ ['SpO₂（空氣）92–93%','mod'],
+ ['PEF 50–70%','mod'],
+ ['&lt;18 歲：PRAM 4–7','mod']
+];
+
+function h_opts(arr,key,cls='two'){
+  return `<div class="opts ${cls}">`+arr.map(o=>
+    `<button class="opt ${S[key]===o.v?'sel':''}" data-pick="${key}" data-v="${o.v}"><b>${o.b}</b><em>${o.e||''}</em></button>`).join('')+`</div>`;
+}
+function h_chks(arr,key){
+  return `<div class="opts" style="grid-template-columns:1fr">`+arr.map((t,i)=>{
+    const label=Array.isArray(t)?t[0]:t, on=S[key].includes(i);
+    return `<label class="chk ${on?'on':''}"><input type="checkbox" data-chk="${key}" data-i="${i}" ${on?'checked':''}><div><b>${label}</b></div></label>`;
+  }).join('')+`</div>`;
+}
+
+function render(){
+  drawProg();
+  const f=flow(), name=f[idx];
+  let h='';
+
+  if(idx===0){
+    h=`<div class="q">這次要處理的臨床情境是？</div><div class="qh">選擇後依 GINA 2026 對應流程提問。</div>`+
+    h_opts([
+      {v:'dx',b:'初次診斷評估',e:'尚未確診，需判讀症狀型態與客觀檢查'},
+      {v:'tx',b:'調整維持治療',e:'已確診，評估控制與風險，決定升階／降階'},
+      {v:'ac',b:'急性發作處置',e:'判定嚴重度並取得處置流程'}
+    ],'scenario','three');
+  }
+
+  else if(name==='年齡'){
+    const opts = S.scenario==='dx'
+      ? [{v:'ad18',b:'成人 ≥18 歲',e:'GINA Table 1 的成人診斷標準'},
+         {v:'ch617',b:'兒童／青少年 6–17 歲',e:'GINA Table 1 的兒童診斷標準（以 % 預測值判讀）'},
+         {v:'a5',b:'幼兒 ≤5 歲',e:'無法做肺功能，屬臨床診斷'}]
+      : [{v:'a12',b:'成人／青少年 ≥12 歲',e:'Track 1 / Track 2、Step 1–5'},
+         {v:'a611',b:'兒童 6–11 歲',e:'兒童專屬階梯與劑量'},
+         {v:'a5',b:'幼兒 ≤5 歲',e:'取自 GINA 完整報告'}];
+    h=`<div class="q">病人年齡層？</div><div class="qh">${S.scenario==='dx'?'注意：GINA 的<b>診斷</b>標準以 18 歲分界，與<b>治療</b>階梯的 12 歲分界不同。':'GINA 依年齡分為三個獨立的治療流程。'}</div>`+h_opts(opts,'age','three');
+  }
+
+  else if(name==='症狀型態'){
+    h=`<div class="q">符合哪些<b>支持氣喘</b>的症狀特徵？</div><div class="qh">GINA Table 1 第 1 部分。可複選。</div>`+h_chks(SX,'sx')+
+      `<div class="note" style="margin-top:16px"><b>降低氣喘可能性的線索（若存在應擴大鑑別診斷）：</b><br>${SX_NEG}</div>`;
+  }
+
+  else if(name==='客觀檢查'){
+    if(S.age==='a5'){
+      h=`<div class="q">≤5 歲：臨床診斷三要件</div><div class="qh">此年齡層無法可靠執行肺功能。</div>`+
+        h_chks([
+          '反覆的喘鳴／咳嗽發作（尤其非僅限於病毒感染時）',
+          '已排除其他診斷（異物、心臟、囊性纖維化、免疫缺損、氣道異常等）',
+          '對氣喘藥物有治療反應（低劑量 ICS 試驗 2–3 個月改善、停藥後惡化）'
+        ],'dxClin');
+    } else {
+      const isChild = S.age==='ch617';
+      h=`<div class="q">輸入肺功能與生物標記數值</div><div class="qh">可只填有的項目。依 GINA 2026 Table 1（${isChild?'兒童 6–17 歲':'成人 ≥18 歲'}）判讀。</div>
+      <div class="grid2">
+        <div class="card pad">
+          <p class="small" style="margin:0 0 10px"><b>1. 基線阻塞</b></p>
+          <div class="numrow"><div class="field"><label>FEV₁/FVC 比值</label><input type="number" step="0.01" id="i_ratio" placeholder="例 0.68" value="${S.obj.ratio??''}"></div></div>
+          <p class="small muted" style="margin:8px 0 0">閾值：${isChild?'兒童一般 &lt; 0.90':'成人一般 &lt; 0.75–0.80'}</p>
+        </div>
+        <div class="card pad">
+          <p class="small" style="margin:0 0 10px"><b>2. 支氣管擴張劑反應性（BDR）</b></p>
+          <div class="numrow">
+            <div class="field"><label>給藥前 FEV₁（L）</label><input type="number" step="0.01" id="i_pre" placeholder="2.10" value="${S.obj.pre??''}"></div>
+            <div class="field"><label>給藥後 FEV₁（L）</label><input type="number" step="0.01" id="i_post" placeholder="2.55" value="${S.obj.post??''}"></div>
+            ${isChild?`<div class="field"><label>預測 FEV₁（L）</label><input type="number" step="0.01" id="i_pred" placeholder="2.30" value="${S.obj.pred??''}"></div>`:''}
+          </div>
+          <p class="small muted" style="margin:8px 0 0">${isChild?'標準：FEV₁ ↑ ≥12% <b>預測值</b>':'標準：FEV₁ 或 FVC ↑ ≥12% <b>且</b> ≥200 mL'}　·　給 200–400 mcg salbutamol 後 10–15 分測</p>
+        </div>
+        <div class="card pad">
+          <p class="small" style="margin:0 0 10px"><b>3. PEF 平均每日變異度（2 週）</b></p>
+          <div class="numrow"><div class="field"><label>變異度（%）</label><input type="number" step="0.1" id="i_pef" placeholder="14" value="${S.obj.pef??''}"></div></div>
+          <p class="small muted" style="margin:8px 0 0">閾值：${isChild?'&gt; 13%':'&gt; 10%'}</p>
+        </div>
+        <div class="card pad">
+          <p class="small" style="margin:0 0 10px"><b>4. FeNO（輔助）</b></p>
+          <div class="numrow"><div class="field"><label>FeNO（ppb）</label><input type="number" step="1" id="i_feno" placeholder="45" value="${S.obj.feno??''}"></div></div>
+          <p class="small muted" style="margin:8px 0 0">支持 Type 2：${isChild?'兒童 &gt; 35 ppb':'成人／青少年 &gt; 50 ppb'}；低值<b>不能排除</b>氣喘</p>
+        </div>
+      </div>
+      <div class="note" style="margin-top:16px"><b>提高陽性率的準備：</b>檢查前停用支氣管擴張劑 —— SABA ≥4 小時、formoterol 或 salmeterol ≥24 小時、vilanterol 或 indacaterol ≥48 小時。氣喘病人在<b>病毒感染期間</b>可能測不到支氣管擴張劑反應。</div>`;
+    }
+  }
+
+  else if(name==='控制程度'){
+    h=`<div class="q">GINA 症狀控制評估（過去 4 週）</div><div class="qh">Table 2A，四題全部作答。</div><div class="opts" style="grid-template-columns:1fr">`;
+    CTRLQ.forEach((q,i)=>{
+      h+=`<div class="card pad" style="padding:14px 16px">
+        <div style="font-size:14.8px;margin-bottom:10px">${i+1}. ${q}${i===2?'<span class="muted small"> — 僅適用於使用 SABA 緩解劑者（非 ICS-formoterol 緩解劑），且不計運動前使用</span>':''}</div>
+        <div class="opts two">
+          <button class="opt ${S.ctrl[i]===0?'sel':''}" data-ctrl="${i}" data-v="0" style="padding:9px 14px"><b>否</b></button>
+          <button class="opt ${S.ctrl[i]===1?'sel':''}" data-ctrl="${i}" data-v="1" style="padding:9px 14px"><b>是</b></button>
+        </div></div>`;
+    });
+    h+='</div>';
+  }
+
+  else if(name==='風險因子'){
+    h=`<div class="q">未來急性發作的風險因子</div><div class="qh">Table 2B.1。<b>症狀未控制本身就是重要風險因子</b>；下列因子即使症狀很少也會增加發作風險。可複選。</div>`+h_chks(RISKS,'risk');
+  }
+
+  else if(name==='目前治療'){
+    const maxStep = S.age==='a5'?4:5;
+    let stepBtns='<div class="opts" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">';
+    for(let i=0;i<=maxStep;i++) stepBtns+=`<button class="opt ${S.cur===i?'sel':''}" data-pick="cur" data-v="${i}" style="text-align:center;padding:12px"><b>${i===0?'未治療':'Step '+i}</b></button>`;
+    stepBtns+='</div>';
+    h=`<div class="q">目前的治療階層？</div><div class="qh">若尚未開始任何含 ICS 治療，選「未治療」。</div>${stepBtns}`;
+    const INIT = S.age==='a12'?INIT_A12 : S.age==='a611'?INIT_A611 : null;
+    if(S.cur===0 && INIT){
+      h+=`<div class="q" style="margin-top:24px">初次就診時的症狀型態？</div><div class="qh">依 ${S.age==='a12'?'Table 3':'Table 4'} 決定起始階層。</div>
+        <div class="opts" style="grid-template-columns:1fr">`+
+        INIT.map((r,i)=>`<button class="opt ${S.init===String(i)?'sel':''}" data-pick="init" data-v="${i}"><b>${r.q}</b></button>`).join('')+`</div>`;
+    }
+    h+=`<div class="q" style="margin-top:24px">目前狀態已維持多久？</div><div class="qh">影響是否可考慮降階。</div>`+
+      h_opts([{v:'lt3',b:'少於 2–3 個月',e:'或剛調整過治療'},{v:'ge3',b:'2–3 個月以上穩定',e:'可評估降階條件'}],'ctrlDur');
+    if(S.age==='a12'){
+      h+=`<div class="q" style="margin-top:24px">使用哪一條路徑？</div><div class="qh">GINA 2026 以 <b>Track 1</b> 為優先。</div>`+
+        h_opts([{v:'t1',b:'Track 1（優先）',e:'ICS-formoterol 抗發炎緩解劑，單一吸入器'},
+                {v:'t2',b:'Track 2（替代）',e:'ICS-SABA 或 SABA 緩解劑'}],'track');
+    }
+  }
+
+  else if(name==='嚴重度'){
+    h=`<div class="q">急性發作徵象（勾選所有符合項目）</div>
+       <div class="qh">GINA 2026 Figure 9。輕度須「符合全部」輕度特徵；重度／危及生命只要<b>任一項</b>即成立。&lt;18 歲請併用 <b>PRAM</b> 評分。</div>`+
+       h_chks(ACUTE_SIGNS,'acute')+
+       `<div class="note crit" style="margin-top:16px"><b>出現嗜睡、意識混亂或發紺 → 急性危及生命。立即安排轉送、同時開始治療，不要等待評估完成。若同時有過敏性休克，先給 epinephrine。</b></div>`;
+  }
+
+  else if(name==='結果'){ h=result(); }
+
+  const canNext = validate();
+  box.innerHTML = h + `<div class="actions no-print">
+    ${idx>0?'<button class="btn plain" id="back">← 上一步</button>':''}
+    ${name!=='結果'?`<button class="btn" id="next" ${canNext?'':'disabled'}>下一步 →</button>`:'<button class="btn plain" id="print">列印／存 PDF</button><button class="btn ghost" id="again">重新評估</button>'}
+    ${name!=='結果'&&!canNext?'<span class="small muted">請先完成本頁選項</span>':''}
+  </div>`;
+  bind();
+}
+
+function validate(){
+  const name=flow()[idx];
+  if(idx===0) return !!S.scenario;
+  if(name==='年齡') return !!S.age;
+  if(name==='目前治療'){
+    const needInit = S.cur===0 && S.age!=='a5';
+    return S.cur!==null && S.ctrlDur!==null && (S.age!=='a12'||S.track!==null) && (!needInit||S.init!==null);
+  }
+  if(name==='控制程度') return S.ctrl.every(v=>v!==null);
+  return true;
+}
+
+function bind(){
+  box.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>{
+    const k=b.dataset.pick, v=b.dataset.v;
+    S[k] = (k==='cur') ? parseInt(v,10) : v;
+    if(k==='scenario') S.age=null;
+    if(k==='cur' && S.cur!==0) S.init=null;
+    render();
+  }));
+  box.querySelectorAll('[data-ctrl]').forEach(b=>b.addEventListener('click',()=>{S.ctrl[+b.dataset.ctrl]=+b.dataset.v;render();}));
+  box.querySelectorAll('[data-chk]').forEach(c=>c.addEventListener('change',()=>{
+    const k=c.dataset.chk,i=+c.dataset.i;
+    if(c.checked){ if(!S[k].includes(i)) S[k].push(i); } else S[k]=S[k].filter(x=>x!==i);
+    render();
+  }));
+  ['ratio','pre','post','pred','pef','feno'].forEach(id=>{
+    const el=box.querySelector('#i_'+id);
+    if(el) el.addEventListener('input',()=>{ S.obj[id]= el.value===''?undefined:parseFloat(el.value); });
+  });
+  const nx=box.querySelector('#next'); if(nx) nx.addEventListener('click',()=>{idx++;render();window.scrollTo({top:0,behavior:'smooth'});});
+  const bk=box.querySelector('#back'); if(bk) bk.addEventListener('click',()=>{idx--;render();window.scrollTo({top:0,behavior:'smooth'});});
+  const pr=box.querySelector('#print'); if(pr) pr.addEventListener('click',()=>window.print());
+  const ag=box.querySelector('#again'); if(ag) ag.addEventListener('click',reset);
+}
+
+function result(){ return S.scenario==='dx'?resDx() : S.scenario==='tx'?resTx() : resAcute(); }
+
+function resDx(){
+  const isChild=S.age==='ch617', isInfant=S.age==='a5';
+  let h='';
+  if(isInfant){
+    const n=S.dxClin.length;
+    const v = n===3?['v-ok','臨床上符合氣喘診斷','三要件皆具備。']
+      : n===2?['v-warn','可能為氣喘，需再確認','建議完成剩餘要件，特別是治療反應的評估。']
+      : ['v-info','證據不足，需進一步評估','此年齡層診斷仰賴反覆發作型態、排除他病與治療反應三者。'];
+    h+=`<div class="verdict ${v[0]}"><h3>${v[1]}</h3><p>${v[2]}（符合 ${n}/3 要件）</p></div>
+    <div class="rx"><div class="rx-h t1">建議下一步</div><div class="rx-b"><ul class="checklist">
+      <li>以<b>低劑量 ICS 試驗治療 2–3 個月</b>，並記錄症狀日誌</li>
+      <li>務必使用 <b>pMDI ＋ 附面罩儲霧艙</b>，並實地確認家長操作</li>
+      <li>試驗期滿評估：改善且停藥後惡化 → 支持氣喘診斷</li>
+      <li>若無改善：<b>先重新檢視診斷、吸入技巧與順從性</b>，再考慮升階</li>
+      <li>警訊（需轉診／進一步檢查）：生長遲滯、杵狀指、持續濕咳有痰、症狀自新生兒期開始、局部性肺部異常</li>
+    </ul></div></div>
+    <div class="note" style="margin-top:14px">2026 Summary Guide 未涵蓋 ≤5 歲，以上取自 GINA 完整報告，請核對原文。</div>`;
+    return h+refBox();
+  }
+
+  const o=S.obj, sxN=S.sx.length;
+  let pos=[], neg=[], missing=[];
+  const ratioCut = isChild?0.90:0.80;
+  if(o.ratio!=null){
+    if(o.ratio<ratioCut) pos.push(`FEV₁/FVC = <b>${o.ratio}</b>，低於 ${isChild?'0.90':'0.75–0.80'}，符合氣流受限`);
+    else neg.push(`FEV₁/FVC = <b>${o.ratio}</b>，未達阻塞標準（${isChild?'&lt;0.90':'&lt;0.75–0.80'}）`);
+  } else missing.push('FEV₁/FVC 比值');
+
+  if(o.pre!=null&&o.post!=null&&o.pre>0){
+    const dL=o.post-o.pre, pct=dL/o.pre*100;
+    let ok,txt;
+    if(isChild){
+      if(o.pred!=null&&o.pred>0){ const pp=dL/o.pred*100; ok=pp>=12; txt=`ΔFEV₁ = ${(dL*1000).toFixed(0)} mL，佔<b>預測值 ${pp.toFixed(1)}%</b>（兒童標準 ≥12% 預測值）`; }
+      else { ok=false; txt=`ΔFEV₁ = ${(dL*1000).toFixed(0)} mL（較基線 ${pct.toFixed(1)}%）—— <b>未輸入預測值</b>，兒童標準須以 % 預測值判讀`; }
+    } else {
+      ok = pct>=12 && dL*1000>=200;
+      txt=`ΔFEV₁ = <b>${(dL*1000).toFixed(0)} mL</b>（較給藥前 <b>${pct.toFixed(1)}%</b>）；成人標準 ≥12% <u>且</u> ≥200 mL`;
+    }
+    (ok?pos:neg).push('支氣管擴張劑反應性：'+txt);
+  } else missing.push('支氣管擴張劑反應性（前後 FEV₁）');
+
+  const pefCut = isChild?13:10;
+  if(o.pef!=null) (o.pef>pefCut?pos:neg).push(`PEF 平均每日變異度 = <b>${o.pef}%</b>（標準 &gt;${pefCut}%）`);
+  else missing.push('PEF 平均每日變異度');
+
+  const fenoCut = isChild?35:50;
+  let fenoNote='';
+  if(o.feno!=null){
+    fenoNote = o.feno>fenoCut
+      ? `<div class="note info" style="margin-top:12px"><b>FeNO = ${o.feno} ppb（&gt;${fenoCut}）</b>：在有典型症狀的病人可<b>支持 Type 2 氣喘</b>診斷，但也可能來自非氣喘疾病，不能單獨診斷。</div>`
+      : `<div class="note" style="margin-top:12px"><b>FeNO = ${o.feno} ppb</b>：未達支持門檻（&gt;${fenoCut}）。<b>低值不能排除氣喘</b>——FeNO 受性別、年齡、抽菸、儀器與時辰影響，清晨較低。</div>`;
+  }
+
+  const objPos=pos.some(p=>!p.startsWith('FEV₁/FVC'));
+  let v;
+  if(objPos && sxN>=3) v=['v-ok','符合氣喘診斷','同時具備典型症狀型態與已證實的可變呼氣氣流受限。'];
+  else if(objPos) v=['v-warn','客觀證據陽性，但症狀型態不夠典型','請重新確認病史，並擴大鑑別診斷（COPD、聲帶功能異常、支氣管擴張症、心衰竭）。'];
+  else if(sxN>=3) v=['v-warn','症狀支持，但尚未證實可變氣流受限','單次檢查陰性<b>不能排除氣喘</b>——症狀輕微、近期用過支氣管擴張劑或病毒感染期間常見。'];
+  else v=['v-info','資料不足，尚無法判定','請補齊症狀型態與客觀檢查後再評估。'];
+
+  h+=`<div class="verdict ${v[0]}"><h3>${v[1]}</h3><p>${v[2]}</p></div>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="rx"><div class="rx-h t1">達標的判讀（${pos.length}）</div><div class="rx-b">${pos.length?'<ul class="checklist">'+pos.map(x=>`<li>${x}</li>`).join('')+'</ul>':'<span class="muted small">無</span>'}</div></div>
+    <div class="rx"><div class="rx-h t2">未達標準／缺項</div><div class="rx-b">
+      ${neg.length?'<ul class="checklist">'+neg.map(x=>`<li>${x}</li>`).join('')+'</ul>':''}
+      ${missing.length?`<p class="small muted" style="margin:${neg.length?'10px':'0'} 0 0">未輸入：${missing.join('、')}</p>`:''}
+      ${!neg.length&&!missing.length?'<span class="muted small">無</span>':''}
+    </div></div></div>
+  <div class="rx"><div class="rx-h t1">症狀型態</div><div class="rx-b">符合 <b>${sxN}/6</b> 項支持氣喘的特徵${sxN?'：'+S.sx.map(i=>SX[i].replace(/<[^>]+>/g,'')).join('、'):''}</div></div>`+fenoNote;
+
+  h+=`<div class="rx" style="margin-top:16px"><div class="rx-h t1">建議下一步</div><div class="rx-b"><ul class="checklist">`;
+  if(objPos&&sxN>=3){
+    h+=`<li><b>把診斷依據記錄在病歷</b>——治療後再確診會困難得多</li>
+        <li>開始含 ICS 的治療；起始階層見「治療階梯」分頁的<b>初始治療表</b></li>
+        <li>記錄症狀控制與風險因子、可行時評估肺功能</li>
+        <li>訓練吸入器使用並檢查技巧、提供書面行動計畫、安排回診</li>`;
+  } else {
+    h+=`<li><b>在症狀發作期間重測</b>肺功能，或加做其他檢查</li>
+        <li>檢查前停用支氣管擴張劑：SABA ≥4 小時、formoterol/salmeterol ≥24 小時、vilanterol/indacaterol ≥48 小時</li>
+        <li>安排 <b>1–2 週 PEF 日誌</b>（每次測 3 下取最高、同一台機器），或支氣管激發試驗</li>
+        <li>肺量計／PEF 無法取得或陰性但高度懷疑時，可參考 <b>FeNO 或血液嗜酸性球</b></li>
+        <li>若其他診斷不太可能：可<b>經驗性給予含 ICS 治療，1–3 個月後複評</b>；未改善則轉診上級</li>`;
+  }
+  h+=`</ul></div></div>`;
+  return h+refBox();
+}
+
+function resTx(){
+  const yes=S.ctrl.filter(v=>v===1).length;
+  const lvl = yes===0?['well','控制良好 Well controlled','v-ok'] : yes<=2?['partly','部分控制 Partly controlled','v-warn'] : ['un','控制不良 Uncontrolled','v-bad'];
+  const hiRisk=S.risk.length>0;
+  const maxStep=S.age==='a5'?4:5;
+  const INIT = S.age==='a12'?INIT_A12 : S.age==='a611'?INIT_A611 : null;
+
+  let rec, action, initRow=null;
+  if(S.cur===0){
+    if(INIT && S.init!==null){ initRow=INIT[+S.init]; rec=initRow.step; }
+    else rec=2;
+    action='開始治療 Start';
+    if(lvl[0]==='un') rec=Math.max(rec,3);
+  } else if(lvl[0]==='un'){ rec=Math.min(S.cur+1,maxStep); action='升階 Step up'; }
+  else if(lvl[0]==='partly'){ rec=Math.min(S.cur+1,maxStep); action='考慮升階 Consider step up'; }
+  else {
+    if(S.ctrlDur==='ge3' && !hiRisk && S.cur>=2){ rec=S.cur-1; action='可考慮降階 Consider step down'; }
+    else { rec=S.cur; action='維持現有治療 Maintain'; }
+  }
+
+  const g=RX[S.age];
+  const trackKey=(S.age==='a12'&&S.track==='t2')?'t2':'t1';
+  const tr=g[trackKey];
+  const stepObj=tr.steps[Math.min(Math.max(rec-1,0),tr.steps.length-1)];
+
+  let h=`<div class="verdict ${lvl[2]}"><h3>${lvl[1]}</h3><p>四題中符合 <b>${yes}</b> 項${yes?'：'+S.ctrl.map((v,i)=>v===1?['日間症狀 &gt;2 次/週','夜間醒來','SABA &gt;2 次/週','活動受限'][i]:null).filter(Boolean).join('、'):''}</p></div>`;
+
+  h+=`<div class="grid2" style="margin-bottom:16px">
+    <div class="rx"><div class="rx-h t1">建議動作</div><div class="rx-b">
+      <div style="font-size:18px;font-weight:680;margin-bottom:4px">${action}</div>
+      <div class="muted small">目前：${S.cur===0?'未治療':'Step '+S.cur} → 建議：<b style="color:var(--brand-d)">Step ${rec}</b>${S.age==='a12'?`（${trackKey==='t1'?'Track 1':'Track 2'}）`:''}</div>
+      ${initRow?`<div class="note info small" style="margin-top:10px">依初始症狀型態（${S.age==='a12'?'Table 3':'Table 4'}）對應起始治療。</div>`:''}
+      ${lvl[0]==='well'&&S.cur>0&&S.ctrlDur!=='ge3'?'<div class="note small" style="margin-top:10px">控制良好但穩定未滿 2–3 個月，<b>先維持</b>，滿 2–3 個月後再評估降階。</div>':''}
+      ${lvl[0]==='well'&&S.cur>0&&hiRisk&&S.ctrlDur==='ge3'?'<div class="note small" style="margin-top:10px">存在未來發作風險因子，<b>暫緩降階</b>，先處理可調整的風險。</div>':''}
+      ${lvl[0]!=='well'?'<div class="note small" style="margin-top:10px"><b>升階前先查四件事：順從性、吸入技巧、風險因子、共病。</b>也可先在同一 step 內換成其他選項，或切換 Track。</div>':''}
+    </div></div>
+    <div class="rx"><div class="rx-h ${trackKey}">未來發作風險 <span class="muted" style="font-weight:400">（${S.risk.length} 項）</span></div><div class="rx-b">
+      ${S.risk.length?'<ul class="checklist">'+S.risk.map(i=>`<li>${RISKS[i]}</li>`).join('')+'</ul>':'<span class="muted small">未勾選任何風險因子</span>'}
+      <div class="note small" style="margin-top:10px">風險與症狀控制<b>各自獨立</b>——症狀很少的人仍可能發生嚴重甚至致死性發作。</div>
+    </div></div>
+  </div>`;
+
+  if(initRow){
+    h+=`<div class="rx"><div class="rx-h ${trackKey}">建議的初始治療 · ${g.label}</div><div class="rx-b">
+      <div class="small muted" style="margin-bottom:8px">表現的症狀：${initRow.q}</div>
+      <div style="font-size:16px;margin-bottom:6px">${S.age==='a12'?(trackKey==='t1'?initRow.t1:initRow.t2):initRow.t1}</div>
+      <div class="hr"></div>
+      <ul class="checklist"><li>記錄氣喘診斷的依據</li><li>記錄症狀控制與風險因子</li><li>可行時評估肺功能</li><li>訓練病人（與家長）正確使用吸入器並檢查技巧</li><li>安排回診</li></ul>
+    </div></div>`;
+  }
+
+  h+=`<div class="rx"><div class="rx-h ${trackKey}">${g.label} · ${stepObj.t}</div><div class="rx-b">
+    <div style="font-size:16px;margin-bottom:8px">${stepObj.d}</div>
+    ${stepObj.ex!=='—'?`<div class="small" style="margin-bottom:6px"><span class="dose">${stepObj.ex}</span></div>`:''}
+    ${stepObj.add&&stepObj.add!=='—'?`<div class="small muted">${stepObj.add}</div>`:''}
+    <div class="hr"></div><div class="small muted">${g.reliever[trackKey]}</div>
+  </div></div>`;
+
+  h+=`<div class="card pad" style="margin-bottom:16px"><h3 style="font-size:15px;margin-bottom:8px">${tr.name}</h3><div class="ladder">`;
+  tr.steps.forEach((s,i)=>{
+    if(S.age==='a12'&&trackKey==='t1'&&i===0) return;
+    h+=`<div class="rung ${trackKey} ${i===rec-1?'hi':''}"><h5>${s.t}</h5><span class="main">${s.d}</span></div>`;
+  });
+  h+='</div></div>';
+
+  h+=`<div class="grid2">
+    <div class="rx"><div class="rx-h t1">升階前必查</div><div class="rx-b"><ul class="checklist">
+      <li><b>順從性</b>——開放式提問、查領藥紀錄</li>
+      <li><b>吸入技巧</b>——請病人實際示範；pMDI 給 ICS 應搭配 spacer</li>
+      <li><b>可調整的風險因子</b>——抽菸、電子菸、過敏原、空氣污染、SABA 過度使用</li>
+      <li><b>共病</b>——肥胖、慢性鼻竇炎、GERD、確診食物過敏</li>
+      <li>診斷是否正確？（COPD、聲帶功能異常、心衰竭、支氣管擴張症）</li>
+    </ul></div></div>
+    <div class="rx"><div class="rx-h t2">降階要點</div><div class="rx-b"><ul class="checklist">
+      <li>控制良好維持 <b>2–3 個月以上</b>才考慮降階</li>
+      <li>時機：<b>無呼吸道感染、非旅行期間、非懷孕</b></li>
+      <li>降階前記錄症狀控制與肺功能、提供書面行動計畫、安排回診</li>
+      <li>維持性 ICS <b>減量 25–50%</b>（換較低含量或減少吸入次數）</li>
+      <li>每次降階後<b>等 2–3 個月</b>確認穩定再降下一階</li>
+      <li>成人／青少年<b>不可完全停掉 ICS</b></li>
+    </ul></div></div>
+  </div>`;
+
+  if(rec>=5){
+    h+=`<div class="note crit" style="margin-top:16px"><b>已達 Step 5：</b>先評估原因並優化治療（含吸入技巧與順從性），再轉診做表現型、共病、風險因子與加成治療評估。務必先區辨<b>難治型（difficult-to-treat）</b>與<b>重度（severe）</b>——前者常因吸入技巧、順從性、抽菸、共病或診斷錯誤所致。生物製劑與 LAMA 選擇見「治療階梯」分頁。</div>`;
+  }
+  if(S.age==='a5'&&rec>=4){
+    h+=`<div class="note crit" style="margin-top:16px"><b>≤5 歲已達最高階：</b>續用並轉診兒童專科評估。此年齡層不建議常規使用高劑量 ICS。內容取自 GINA 完整報告，請核對原文。</div>`;
+  }
+  return h+refBox();
+}
+
+function resAcute(){
+  const life=S.acute.filter(i=>ACUTE_SIGNS[i][1]==='life').length;
+  const sev =S.acute.filter(i=>ACUTE_SIGNS[i][1]==='sev').length;
+  const mod =S.acute.filter(i=>ACUTE_SIGNS[i][1]==='mod').length;
+  let key,lvl,v;
+  if(life>0){key='life';lvl='急性危及生命 Acutely life-threatening';v='v-bad';}
+  else if(sev>0){key='sev';lvl='重度或危及生命 Severe / life-threatening';v='v-bad';}
+  else if(mod>0){key='mod';lvl='中度 Moderate';v='v-warn';}
+  else {key='mild';lvl='輕度 Mild';v='v-ok';}
+  const adult=S.age==='a12';
+
+  let h=`<div class="verdict ${v}"><h3>${lvl}</h3><p>勾選徵象：危及生命 ${life} · 重度 ${sev} · 中度 ${mod}${S.age!=='a12'?' ｜ &lt;18 歲請併用 <b>PRAM</b> 評分':''}</p></div>`;
+
+  if(key==='life'||key==='sev'){
+    h+=`<div class="note crit" style="margin-bottom:16px;font-size:15px"><b>立即安排轉送急性照護機構，同時馬上開始治療。</b>若同時有過敏性休克，<b>先給 epinephrine（IM 或鼻用）</b>。</div>`;
+  }
+
+  h+=`<div class="rx"><div class="rx-h t1">處置 · ${adult?'成人／青少年':(S.age==='a611'?'兒童 6–11 歲':'幼兒 ≤5 歲')} · ${lvl}</div><div class="rx-b"><ul class="checklist">`;
+  if(key==='mild'){
+    h+=`<li><b>Salbutamol 4 puffs</b> pMDI ＋ spacer，<b>或 budesonide-formoterol 160/4.5 mcg 2 puffs</b> <span class="badge new">2026</span></li>
+        <li>評估反應，必要時 <b>30–60 分鐘後再給一次</b></li>
+        <li><b>輕度發作通常不需口服類固醇</b></li>`;
+  } else if(key==='mod'){
+    h+=`<li><b>Salbutamol 4–6 puffs</b> pMDI ＋ spacer（或 <b>2.5 mg 霧化</b>），必要時最多 <b>3 次</b>、間隔 20–30 分鐘</li>
+        <li>若需要且可取得 <b>ipratropium</b>：每次隨 salbutamol 給 <b>4 puffs</b>，最多 3 次</li>
+        <li><b>開始口服類固醇</b>：${adult?'prednisolone <span class="dose">40–50 mg 每天早上 × 5–7 天</span>':'prednisolone <span class="dose">1–2 mg/kg/day（上限 40 mg）每天早上 × 3–5 天</span>'}</li>`;
+  } else {
+    h+=`<li><b>Salbutamol 6–10 puffs</b> pMDI ＋ spacer（或 <b>5 mg 霧化</b>），必要時<b>每 20–30 分鐘</b>重複</li>
+        <li>可取得時：每次隨 salbutamol 給 <b>ipratropium 4 puffs</b></li>
+        <li><b>給氧</b>，目標飽和度 <b>92–95%</b></li>
+        <li><b>給全身性類固醇</b>：${adult?'prednisolone <span class="dose">40–50 mg 每天早上 × 5–7 天</span>':'prednisolone <span class="dose">1–2 mg/kg/day（上限 40 mg）每天早上 × 3–5 天</span>'}</li>
+        <li><b>持續監測</b></li>`;
+  }
+  h+=`<li><b>不要</b>常規做胸部 X 光或血液氣體分析、<b>不要</b>常規開抗生素、<b>不使用鎮靜劑</b></li>
+      <li><b>1 小時內（或更早）複評</b>：血氧、呼吸速率、輔助肌使用、進氣量、PEF；&lt;18 歲重測 PRAM。<b>惡化或未改善 → 轉送更高層級照護</b></li>
+  </ul>
+  <div class="note small" style="margin-top:12px"><b>給藥技巧：</b>salbutamol 100 mcg/puff、ipratropium 20 mcg/puff。用 spacer <b>一次只按一下</b>；太喘無法單次深吸閉氣者改用<b>潮氣呼吸</b>。<b>salbutamol 每次按壓前都要搖勻</b>。呼吸道感染或高度懷疑感染者<b>避免使用霧化器</b>。</div>
+  <div class="note small" style="margin-top:10px">脈搏血氧儀在<b>膚色較深</b>的低血氧病人可能<b>高估</b>血氧；高海拔地區正常值本就較低，目標值需調整。</div>
+  </div></div>`;
+
+  h+=`<div class="grid2" style="margin-top:16px">
+    <div class="rx"><div class="rx-h t1">可返家的條件</div><div class="rx-b"><ul class="checklist">
+      <li>症狀與徵象改善，且<b>最後一次 salbutamol 後 1–2 小時內</b>符合「輕度」標準</li>
+      <li>空氣下 SpO₂ <b>≥92%</b></li>
+      <li>PEF 改善且 <b>&gt;70%</b> 個人最佳值或預測值</li>
+      <li>家中有足夠的照護資源</li>
+    </ul></div></div>
+    <div class="rx"><div class="rx-h t2">出院前必做</div><div class="rx-b"><ul class="checklist">
+      <li>記錄診斷（若已確認）</li>
+      <li><b>開始或增加含 ICS 的治療</b>——${adult?'<b>≥12 歲優先 ICS-formoterol MART</b>；若無法取得，用每日規律中劑量 ICS-LABA（Track 2 Step 4）':'6–11 歲：中劑量 ICS-LABA ＋ 需要時 ICS-SABA 或 SABA，或 ICS-formoterol MART'}</li>
+      <li>緩解劑改為<b>需要時使用，不是規律使用</b></li>
+      <li>訓練吸入技巧（pMDI 要用 spacer）並強化順從性</li>
+      <li>若已開始口服類固醇，依療程服完</li>
+      <li>提供<b>臨時的書面行動計畫</b></li>
+      <li>安排追蹤：<b>成人 2–7 天內；兒童 2–5 天內</b></li>
+    </ul></div></div>
+  </div>`;
+
+  h+=`<div class="rx" style="margin-top:16px"><div class="rx-h t1">追蹤時要做</div><div class="rx-b"><ul class="checklist">
+    <li>發作是否緩解？若否，口服類固醇是否要繼續，或需轉急診？</li>
+    <li>確認持續使用含 ICS 治療；≥12 歲若尚未使用 ICS-formoterol，宜<b>改為 MART</b></li>
+    <li>確認緩解劑為需要時使用而非規律使用</li>
+    <li>檢查並矯正吸入技巧與順從性</li>
+    <li>檢查並處理可調整的風險因子</li>
+    <li>行動計畫是否被理解？是否需要修改？</li>
+    <li><b>過去一年已使用超過 1 個療程口服類固醇 → 轉診專科</b></li>
+    <li>安排 <b>2–3 個月內</b>的下次回診</li>
+  </ul></div></div>`;
+  return h+refBox();
+}
+
+function refBox(){
+  return `<div class="note info" style="margin-top:18px">依據 <b>GINA 2026 Summary Guide for Asthma Management and Prevention</b> 整理。本輸出為決策輔助，不能取代個別臨床判斷；藥物劑量請於處方前核對原始指引、仿單與健保給付規範。</div>`;
+}
+
+function reset(){
+  Object.assign(S,{scenario:null,age:null,sx:[],obj:{},dxClin:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[]});
+  idx=0; render(); window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById('restart').addEventListener('click',reset);
+render();
+</script>
+
+</body>
+</html>
