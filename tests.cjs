@@ -111,6 +111,54 @@ t('ICU alert is stop-level', a[0][0] === 'stop');
 t('FEV1 <60 and exac listed', a.some(x => x[2].includes('FEV₁ 50%') && x[2].includes('1 次')));
 t('lf chip suppresses duplicate FEV1 line', !LX.riskAlerts(new Set(['lf']), 50, 0).some(x => x[2].includes('FEV₁ 50%')));
 
+/* --- pregnancy: no step-down, step-up unaffected (p.9, p.31) --- */
+o = LX.ongoing(base({ track: 't1', step: 4, stable: 6, preg: true }));
+t('pregnant + well controlled → stay, no step-down', o.action === 'stay' && o.to === 4);
+t('pregnant → 4–6 week follow-up caution', o.cautions.some(c => c.includes('4–6 週')));
+t('same case not pregnant → step down', LX.ongoing(base({ track: 't1', step: 4, stable: 6 })).action === 'down');
+o = LX.ongoing(base({ track: 't1', step: 3, ctl: ctl(1, 1, 0, 1), preg: true }));
+t('pregnant + uncontrolled → step-up unchanged', o.action === 'up' && o.to === 4);
+t('pregnancy flag ignored for children', LX.ongoing(base({ age: 'child', step: 3, stable: 3, preg: true })).action === 'down');
+
+/* --- Table 1 diagnosis --- */
+const dx = (o) => LX.dxEval(Object.assign({ age: 'ad18', sx: [0, 1, 2] }, o));
+t('adult +200 mL, 6.5% → negative', dx({ obj: { pre: 3.1, post: 3.3 } }).key === 'sxOnly');
+t('adult +250 mL, 12.5% → confirmed', dx({ obj: { pre: 2, post: 2.25 } }).key === 'confirmed');
+t('adult +190 mL, 19% → negative (needs ≥200 mL)', dx({ obj: { pre: 1, post: 1.19 } }).key === 'sxOnly');
+t('adult FVC response alone counts', dx({ obj: { pre: 2, post: 2.1, fvcPre: 3, fvcPost: 3.4 } }).key === 'confirmed');
+t('adult FEV1 and FVC both short → negative', dx({ obj: { pre: 2, post: 2.1, fvcPre: 3, fvcPost: 3.1 } }).key === 'sxOnly');
+t('adult PEF BDR ≥20% (no spirometry)', dx({ obj: { pefPre: 300, pefPost: 360 } }).key === 'confirmed');
+t('adult PEF BDR 15% → negative', dx({ obj: { pefPre: 300, pefPost: 345 } }).key === 'sxOnly');
+t('FEV1 takes priority over PEF BDR', dx({ obj: { pre: 2, post: 2.1, pefPre: 300, pefPost: 400 } }).key === 'sxOnly');
+t('adult PEF variability >10%', dx({ obj: { pef: 14 } }).key === 'confirmed' && dx({ obj: { pef: 10 } }).key === 'sxOnly');
+const kid = (o) => dx(Object.assign({ age: 'ch617' }, o));
+t('child 10% of predicted → negative even if 13% of baseline', kid({ obj: { pre: 1.5, post: 1.7, pred: 2 } }).key === 'sxOnly');
+t('child 12% of predicted → confirmed', kid({ obj: { pre: 1.5, post: 1.74, pred: 2 } }).key === 'confirmed');
+let dxr = kid({ obj: { pre: 1.5, post: 1.9 } });
+t('child without predicted → cannot judge, not negative', dxr.neg.length === 0 && dxr.ind.length === 1 && dxr.key === 'needTests');
+t('child PEF BDR ≥15%, variability >13%', kid({ obj: { pefPre: 200, pefPost: 230 } }).key === 'confirmed' && kid({ obj: { pef: 13 } }).key === 'sxOnly' && kid({ obj: { pef: 14 } }).key === 'confirmed');
+t('other Table 1 evidence counts', dx({ other: [1] }).key === 'confirmed');
+t('low FEV1/FVC alone is not variability', dx({ obj: { ratio: 0.6 } }).key === 'needTests' && !dx({ obj: { ratio: 0.6 } }).objPos);
+t('FeNO alone is not variability', dx({ obj: { feno: 60 } }).key === 'sxT2' && kid({ obj: { feno: 40 } }).key === 'sxT2' && dx({ obj: { feno: 40 } }).key === 'needTests');
+t('positive test without typical history', dx({ sx: [1], obj: { pef: 14 } }).key === 'objOnly');
+t('nothing entered', dx({ sx: [] }).key === 'insufficient');
+t('out-of-range value ignored and flagged', dx({ obj: { pre: 2100, post: 2500 } }).bad.length === 2 && dx({ obj: { pre: 2100, post: 2500 } }).key === 'needTests');
+
+/* --- Figure 9 severity --- */
+const CL = ['sev', 'life', 'mod', 'mild', 'mild', 'mild'];
+const ac = (p, pram) => LX.acuteClassify(CL, p, pram);
+t('nothing ticked is not mild', ac([]).key === 'mod' && ac([]).incomplete);
+t('some mild features only → moderate, flagged', ac([3, 4]).key === 'mod' && ac([3, 4]).incomplete);
+t('all mild features → mild', ac([3, 4, 5]).key === 'mild' && !ac([3, 4, 5]).incomplete);
+t('all mild plus one moderate → moderate', ac([2, 3, 4, 5]).key === 'mod' && !ac([2, 3, 4, 5]).incomplete);
+t('any severe sign → severe', ac([0, 3, 4, 5]).key === 'sev');
+t('any life sign → life', ac([0, 1]).key === 'life');
+t('PRAM bands', [[1, 'mild'], [3, 'mild'], [4, 'mod'], [7, 'mod'], [8, 'sev'], [10, 'sev'], [11, 'life'], [12, 'life']].every(([s, k]) => LX.pramBand(s) === k));
+t('PRAM out of range ignored', LX.pramBand(13) === null && LX.pramBand('') === null && LX.pramBand(null) === null);
+t('PRAM alone sets severity', ac([], 9).key === 'sev' && ac([], 5).key === 'mod' && ac([], 2).key === 'mild');
+t('PRAM mild does not override a severe sign', ac([0], 2).key === 'sev');
+t('PRAM severe overrides mild features', ac([3, 4, 5], 9).key === 'sev');
+
 /* --- teaching tabs: data shape, and cases / quiz checked against the engine --- */
 const tsrc = html.slice(html.indexOf('/*TEACH-START*/'), html.indexOf('/*TEACH-END*/'));
 const tm = { exports: {} };

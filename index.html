@@ -574,6 +574,7 @@ tr.lx-hit td:first-child{box-shadow:inset 3px 0 0 var(--brand)}
             <select id="lx-c1"><option value="icsform">需要時 ICS-formoterol</option><option value="icssaba">需要時 ICS-SABA 複方</option><option value="sep">用 SABA 時另吸 ICS</option></select></div>
         </div>
         <p class="small muted" style="margin:6px 0 0">也可以直接點下方階梯圖的格子來設定目前階梯。</p>
+        <label class="lx-check" id="lx-pregwrap" style="margin-top:8px"><input type="checkbox" id="lx-preg"><span>目前懷孕 <span class="muted small">（不建議降階）</span></span></label>
 
         <div class="lx-sub">過去 4 週的症狀控制 <span class="en">Table 2A</span></div>
         <label class="lx-check"><input type="checkbox" id="lx-c-day"><span>白天症狀每週 &gt;2 次</span></label>
@@ -1133,7 +1134,7 @@ function initial(i){
 
 /* Ongoing treatment: Table 2 assessment → step up / stay / step down (p.22, p.27, p.30) */
 function ongoing(m){
-  const child=isChild(m.age), t1=!child&&m.track==='t1';
+  const child=isChild(m.age), t1=!child&&m.track==='t1', preg=!!m.preg&&isTeenAdult(m.age);
   const ctl=control(m.ctl,child?(m.c1==='icsform'&&+m.step===1?'t1':'t2'):m.track);
   const exac=num(m.exac)||0, fev1=num(m.fev1), stable=num(m.stable)||0;
   let cur=+m.step; if(t1&&cur<2)cur=2;            // Track 1 Steps 1–2 are one regimen
@@ -1146,7 +1147,9 @@ function ongoing(m){
   const out={ctl,exac,issues,from:cur,to:cur,action:'stay',why:[],cautions:[],next:null};
   const minStep=t1?2:1, needMonths=child?3:2;
   if(ctl.level==='well'&&exac===0){
-    if(stable>=needMonths&&cur>minStep){
+    if(stable>=needMonths&&cur>minStep&&preg){
+      out.why.push('症狀控制良好，但懷孕期間不減藥也不停藥（p.9）');
+    }else if(stable>=needMonths&&cur>minStep){
       out.action='down';out.to=(t1&&cur===3)?2:cur-1;
       out.why.push('症狀控制良好已 '+stable+' 個月，過去 12 個月無急性發作');
       if((fev1!=null&&fev1<60)||m.icu||m.riskN>0)out.cautions.push('有未來發作的風險因子：可以降階，但要密切追蹤並給書面行動計畫');
@@ -1180,6 +1183,7 @@ function ongoing(m){
     if(exac>0&&!t1&&!child)out.cautions.push('可改用 Track 1（ICS-formoterol 緩解）同一階梯：比 SABA 緩解更能減少嚴重發作');
     if(exac>0)out.cautions.push('任何一次需急診或 OCS 的發作都是警訊：檢視治療並給書面行動計畫');
   }
+  if(preg)out.cautions.push('懷孕：不減也不停含 ICS 治療；每 4–6 週追蹤；發作照一般成人處理，避免胎兒缺氧；不做支氣管激發試驗（p.9、p.31）');
   return out;
 }
 
@@ -1265,7 +1269,66 @@ function riskAlerts(set,fev1,exac){
 }
 function riskCount(set,fev1,exac){const f=num(fev1);return set.size+((f!=null&&f<60&&!set.has('lf'))?1:0)+((num(exac)||0)>0?1:0);}
 
-return {AGE,num,control,initial,ongoing,regimen,stepDown,step5,RISK,riskAlerts,riskCount,OTHER,T1,T2,KID};
+/* Table 1 — diagnosis. age: 'ad18' or 'ch617'. sx: indices into SX (0 = typical symptoms); other: indices into DX_OTHER. FEV1/FVC is not a Table 1 criterion. */
+const DX_RANGE={ratio:[0.2,1.2],pre:[0.2,8],post:[0.2,8],pred:[0.2,8],fvcPre:[0.2,10],fvcPost:[0.2,10],pefPre:[30,900],pefPost:[30,900],pef:[0,100],feno:[0,400]};
+const DX_OTHER=['ICS 治療 4 週後明顯改善（成人 FEV₁ 或 FVC ↑ ≥12% 且 ≥200 mL，或 PEF ↑ ≥20%；兒童 FEV₁ ↑ ≥12% 預測值，或 PEF ↑ ≥15%）','支氣管激發試驗陽性（methacholine、過度換氣、高張鹽水、mannitol 或運動）','就診間肺功能變異過大（成人 FEV₁ ≥12% 且 ≥200 mL，或 PEF ≥20%；兒童 FEV₁ ≥12%，或 PEF ≥15%）'];
+function dxEval({age,sx=[],obj={},other=[]}){
+  const kid=age==='ch617', o={}, bad=[], pos=[], neg=[], ind=[], missing=[];
+  const r1=x=>Math.round(x*10)/10;
+  for(const k in DX_RANGE){const v=num(obj[k]);if(v===null)continue;if(v<DX_RANGE[k][0]||v>DX_RANGE[k][1])bad.push(k);else o[k]=v;}
+  let bdr=false, judged=false;
+  if(o.pre!=null&&o.post!=null){
+    bdr=true;
+    const dL=o.post-o.pre, ml=Math.round(dL*1000), pct=dL/o.pre*100;
+    if(kid){
+      if(o.pred!=null){const pp=dL/o.pred*100;judged=true;(pp>=12?pos:neg).push(`可逆性：ΔFEV₁ ${ml} mL，佔<b>預測值 ${r1(pp)}%</b>（兒童標準 ≥12% 預測值）`);}
+      else ind.push(`可逆性：ΔFEV₁ ${ml} mL（較用藥前 ${r1(pct)}%）。兒童要看 <b>% 預測值</b>，請輸入預測 FEV₁`);
+    }else{
+      judged=true;
+      let fvcOk=false, fvcTxt='';
+      if(o.fvcPre!=null&&o.fvcPost!=null){
+        const fL=o.fvcPost-o.fvcPre, fml=Math.round(fL*1000), fp=fL/o.fvcPre*100;
+        fvcOk=fp>=12&&fml>=200;fvcTxt=`；ΔFVC <b>${fml} mL</b>（${r1(fp)}%）`;
+      }
+      ((pct>=12&&ml>=200)||fvcOk?pos:neg).push(`可逆性：ΔFEV₁ <b>${ml} mL</b>（較用藥前 <b>${r1(pct)}%</b>）${fvcTxt}；成人標準 FEV₁ <u>或</u> FVC ≥12% <u>且</u> ≥200 mL`);
+    }
+  }
+  if(!bdr&&o.pefPre!=null&&o.pefPost!=null){
+    bdr=true;judged=true;
+    const p=(o.pefPost-o.pefPre)/o.pefPre*100, cut=kid?15:20;
+    (p>=cut?pos:neg).push(`可逆性（PEF，無肺量計時）：PEF ↑ <b>${r1(p)}%</b>（標準 ≥${cut}%）`);
+  }
+  if(!bdr)missing.push('可逆性（前後 FEV₁ 或 PEF）');
+  const pefCut=kid?13:10;
+  if(o.pef!=null)(o.pef>pefCut?pos:neg).push(`PEF 2 週平均每日變異 <b>${o.pef}%</b>（標準 &gt;${pefCut}%）`);
+  else missing.push('PEF 平均每日變異');
+  other.forEach(i=>pos.push(DX_OTHER[i]));
+  const objPos=pos.length>0, tested=judged||o.pef!=null||other.length>0, fenoCut=kid?35:50, fenoHigh=o.feno!=null&&o.feno>fenoCut;
+  const feat=sx.filter(i=>i>0).length, typical=sx.includes(0)&&feat>=2;
+  const key=objPos&&typical?'confirmed':objPos?'objOnly':typical&&tested?'sxOnly':typical&&fenoHigh?'sxT2':typical?'needTests':'insufficient';
+  let ratioTxt=null;
+  if(o.ratio!=null)ratioTxt=o.ratio<(kid?0.90:0.75)
+    ?`FEV₁/FVC ${o.ratio}（低於 ${kid?'0.90':'0.75–0.80'}）：有氣流受限，但還要證實<b>可變性</b>才符合氣喘，並考慮 COPD 等鑑別診斷。`
+    :`FEV₁/FVC ${o.ratio}：基線未見阻塞，這不排除氣喘。`;
+  return {key,pos,neg,ind,missing,bad,objPos,typical,feat,feno:o.feno,fenoHigh,fenoCut,ratioTxt};
+}
+
+/* Figure 9. classes[i] = 'mild'|'mod'|'sev'|'life' for each sign; pram: 0–12 or null (<18 y only).
+   Mild needs ALL mild features, or a mild PRAM (Figure 9 lets <18 y use a clinical score). */
+const pramBand=s=>{const v=num(s);return v==null||v<0||v>12?null:v>=11?'life':v>=8?'sev':v>=4?'mod':'mild';};
+function acuteClassify(classes,picked,pram){
+  const count=c=>picked.filter(i=>classes[i]===c).length, pb=pramBand(pram);
+  const mildTotal=classes.filter(c=>c==='mild').length;
+  let key, incomplete=false;
+  if(count('life')||pb==='life')key='life';
+  else if(count('sev')||pb==='sev')key='sev';
+  else if(count('mod')||pb==='mod')key='mod';
+  else if(pb==='mild'||(mildTotal>0&&count('mild')===mildTotal))key='mild';
+  else{key='mod';incomplete=true;}
+  return {key,incomplete,pramBand:pb,counts:{life:count('life'),sev:count('sev'),mod:count('mod'),mild:count('mild'),mildTotal}};
+}
+
+return {AGE,DX_OTHER,dxEval,pramBand,acuteClassify,num,control,initial,ongoing,regimen,stepDown,step5,RISK,riskAlerts,riskCount,OTHER,T1,T2,KID};
 })();
 if(typeof module!=='undefined')module.exports=LX;
 /*ENGINE-END*/
@@ -1378,6 +1441,7 @@ function fill(){
   $('#lx-night').checked=L.init.night;$('#lx-rexac').checked=L.init.recentExac;$('#lx-acute').checked=L.init.acute;
   $('#lx-track').value=L.m.track;$('#lx-c1').value=L.m.c1;
   ['day','night','rel','act'].forEach(k=>$('#lx-c-'+k).checked=!!L.m.ctl[k]);
+  $('#lx-preg').checked=!!L.m.preg;
   $('#lx-exac').value=L.m.exac;$('#lx-fev1').value=L.m.fev1;$('#lx-stable').value=L.m.stable;
   CHECKS.forEach(([k])=>$('#lx-ck-'+k).checked=L.m.checks[k]!==false);
   $$('#lx-risk input').forEach(i=>i.checked=L.risk.has(i.dataset.k));
@@ -1389,6 +1453,7 @@ segBind('#lx-ctx',v=>{L.ctx=v;});
 segBind('#lx-days',v=>{L.init.days=v;});
 segBind('#lx-lf',v=>{L.init.lf=v;});
 [['#lx-night','night'],['#lx-rexac','recentExac'],['#lx-acute','acute']].forEach(([id,k])=>$(id).addEventListener('change',e=>{L.init[k]=e.target.checked;touch();render();}));
+$('#lx-preg').addEventListener('change',e=>{L.m.preg=e.target.checked;touch();render();});
 $('#lx-track').addEventListener('change',e=>{L.m.track=e.target.value;touch();stepOptions();render();});
 $('#lx-step').addEventListener('change',e=>{L.m.step=+e.target.value;touch();render();});
 $('#lx-c1').addEventListener('change',e=>{L.m.c1=e.target.value;touch();render();});
@@ -1418,6 +1483,7 @@ function render(){
   $('#lx-days3').textContent=child()?'3–4 天/週':'約 3 天/週';
   $('#lx-daysmost').textContent=child()?'約 4–5 天/週（大多數日子）':'≥4 天/週（大多數日子）';
   $('#lx-trackwrap').hidden=child();
+  $('#lx-pregwrap').hidden=!teen();
   $('#lx-c1wrap').hidden=!(child()&&L.m.step===1);
   const relNA=t1()||(child()&&L.m.step===1&&L.m.c1==='icsform');
   $('#lx-c-relwrap').hidden=relNA;$('#lx-c-relna').hidden=!relNA;
@@ -1536,7 +1602,7 @@ function summary(step,title,sub,why,rg,c){
   L2.push(`【氣喘治療階梯｜GINA 2026】${LX.AGE[L.age]}，${L.ctx==='init'?'初診（尚未使用含 ICS 治療）':'治療中'}`);
   if(L.ctx==='maint'){
     const tn={t1:'Track 1（ICS-formoterol 緩解）',t2a:'Track 2（ICS-SABA 緩解）',t2b:'Track 2（SABA 緩解）'}[L.m.track];
-    L2.push(`目前：${child()?'':tn+' '}Step ${fmtStep(L.m.step,L.m.track)}；控制度 ${c.label}（${c.n}/${c.of}）；過去12個月發作 ${L.m.exac||0} 次；FEV1 ${L.m.fev1||'未測'}%；穩定 ${L.m.stable||0} 個月`);
+    L2.push(`目前：${child()?'':tn+' '}Step ${fmtStep(L.m.step,L.m.track)}；控制度 ${c.label}（${c.n}/${c.of}）；過去12個月發作 ${L.m.exac||0} 次；FEV1 ${L.m.fev1||'未測'}%；穩定 ${L.m.stable||0} 個月${teen()&&L.m.preg?'；懷孕中':''}`);
   }
   L2.push(`結論：${title}${sub?'（'+sub+'）':''}`);
   if(why.length)L2.push('依據：'+why.join('；'));
@@ -1561,7 +1627,8 @@ return {load(st,demo){L=st;touch();fill();render();if(demo){$('#lx-sample').text
 })();
 
 /* ================= wizard ================= */
-const S={scenario:null,age:null,sx:[],obj:{},dxClin:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[]};
+const S={scenario:null,age:null,sx:[],obj:{},dxClin:[],dxOther:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[],pram:null,preg:false};
+const isPed=()=>S.scenario==='ac'&&S.age!=='ad18';
 const box=document.getElementById('wizbox'), prog=document.getElementById('prog');
 let idx=0;
 const SCEN={
@@ -1606,11 +1673,9 @@ const ACUTE_SIGNS=[
  ['呼吸速率 <b>&gt;30/min</b>','sev'],
  ['<b>安靜或無聲的胸廓</b>','sev'],
  ['PEF <b>&lt;50%</b> 個人最佳值或預測值','sev'],
- ['&lt;18 歲：<b>PRAM 8–12</b>','sev'],
  ['<b>嗜睡</b>','life'],
  ['<b>意識混亂</b>','life'],
  ['<b>發紺</b>','life'],
- ['&lt;18 歲：<b>PRAM 11–12</b>','life'],
  ['只能說短句、偏好坐姿','mod'],
  ['呼吸速率增快但 ≤30/min','mod'],
  ['使用輔助呼吸肌','mod'],
@@ -1618,15 +1683,23 @@ const ACUTE_SIGNS=[
  ['進氣量減少','mod'],
  ['SpO₂（空氣）92–93%','mod'],
  ['PEF 50–70%','mod'],
- ['&lt;18 歲：PRAM 4–7','mod']
+ ['可說完整句子、能平躺、不躁動','mild'],
+ ['呼吸速率正常或僅輕微增快','mild'],
+ ['沒有（或輕微）使用輔助呼吸肌','mild'],
+ ['沒有（或輕微）呼氣喘鳴','mild'],
+ ['進氣量正常','mild'],
+ ['SpO₂（空氣）<b>≥94%</b>','mild'],
+ ['PEF <b>&gt;70%</b> 個人最佳值或預測值','mild']
 ];
+const SIGN_GROUPS=[['life','急性危及生命（任一項）'],['sev','重度或危及生命（任一項）'],['mod','中度（參考特徵）'],['mild','輕度（須符合全部）']];
 
 function h_opts(arr,key,cls='two'){
   return `<div class="opts ${cls}">`+arr.map(o=>
     `<button class="opt ${S[key]===o.v?'sel':''}" data-pick="${key}" data-v="${o.v}"><b>${o.b}</b><em>${o.e||''}</em></button>`).join('')+`</div>`;
 }
-function h_chks(arr,key){
+function h_chks(arr,key,only){
   return `<div class="opts" style="grid-template-columns:1fr">`+arr.map((t,i)=>{
+    if(only&&!only(t)) return '';
     const label=Array.isArray(t)?t[0]:t, on=S[key].includes(i);
     return `<label class="chk ${on?'on':''}"><input type="checkbox" data-chk="${key}" data-i="${i}" ${on?'checked':''}><div><b>${label}</b></div></label>`;
   }).join('')+`</div>`;
@@ -1651,6 +1724,11 @@ function render(){
       ? [{v:'ad18',b:'成人 ≥18 歲',e:'GINA Table 1 的成人診斷標準'},
          {v:'ch617',b:'兒童／青少年 6–17 歲',e:'GINA Table 1 的兒童診斷標準（以 % 預測值判讀）'},
          {v:'a5',b:'幼兒 ≤5 歲',e:'無法做肺功能，屬臨床診斷'}]
+      : S.scenario==='ac'
+      ? [{v:'ad18',b:'成人 ≥18 歲',e:'Figure 9 成人劑量'},
+         {v:'a1217',b:'青少年 12–17 歲',e:'Figure 9 ＋ PRAM 評分'},
+         {v:'a611',b:'兒童 6–11 歲',e:'Figure 9 ＋ PRAM、兒童劑量'},
+         {v:'a5',b:'幼兒 ≤5 歲',e:'Figure 9 不涵蓋；取自完整報告'}]
       : [{v:'a12',b:'成人／青少年 ≥12 歲',e:'Track 1 / Track 2、Step 1–5'},
          {v:'a611',b:'兒童 6–11 歲',e:'兒童專屬階梯與劑量'},
          {v:'a5',b:'幼兒 ≤5 歲',e:'取自 GINA 完整報告'}];
@@ -1672,34 +1750,37 @@ function render(){
         ],'dxClin');
     } else {
       const isChild = S.age==='ch617';
-      h=`<div class="q">輸入肺功能與生物標記數值</div><div class="qh">可只填有的項目。依 GINA 2026 Table 1（${isChild?'兒童 6–17 歲':'成人 ≥18 歲'}）判讀。</div>
+      const field=(id,lab,ph,step)=>`<div class="field"><label for="i_${id}">${lab}</label><input type="number" step="${step}" id="i_${id}" placeholder="${ph}" value="${S.obj[id]??''}"></div>`;
+      h=`<div class="q">輸入肺功能與生物標記數值</div><div class="qh">可只填有的項目。依 GINA 2026 Table 1（${isChild?'兒童 6–17 歲':'成人 ≥18 歲'}）判讀，<b>符合任一項</b>可變性證據即可。</div>
       <div class="grid2">
         <div class="card pad">
-          <p class="small" style="margin:0 0 10px"><b>1. 基線阻塞</b></p>
-          <div class="numrow"><div class="field"><label>FEV₁/FVC 比值</label><input type="number" step="0.01" id="i_ratio" placeholder="例 0.68" value="${S.obj.ratio??''}"></div></div>
-          <p class="small muted" style="margin:8px 0 0">閾值：${isChild?'兒童一般 &lt; 0.90':'成人一般 &lt; 0.75–0.80'}</p>
+          <p class="small" style="margin:0 0 10px"><b>1. 可逆性（FEV₁${isChild?'':' 或 FVC'}）</b></p>
+          <div class="numrow">${field('pre','用藥前 FEV₁（L）','2.10','0.01')}${field('post','用藥後 FEV₁（L）','2.55','0.01')}${isChild?field('pred','預測 FEV₁（L）','2.30','0.01'):''}</div>
+          ${isChild?'':`<div class="numrow" style="margin-top:10px">${field('fvcPre','用藥前 FVC（L）','選填','0.01')}${field('fvcPost','用藥後 FVC（L）','選填','0.01')}</div>`}
+          <p class="small muted" style="margin:8px 0 0">${isChild?'標準：FEV₁ ↑ ≥12% <b>預測值</b>':'標準：FEV₁ 或 FVC ↑ ≥12% <b>且</b> ≥200 mL'}　·　200–400 mcg salbutamol 前後 10–15 分鐘</p>
+          <p class="small" style="margin:12px 0 8px">沒有肺量計時改用 PEF：</p>
+          <div class="numrow">${field('pefPre','用藥前 PEF（L/min）','320','1')}${field('pefPost','用藥後 PEF（L/min）','400','1')}</div>
+          <p class="small muted" style="margin:8px 0 0">標準：PEF ↑ ${isChild?'≥15%':'≥20%'}；有 FEV₁ 時以 FEV₁ 為準</p>
         </div>
         <div class="card pad">
-          <p class="small" style="margin:0 0 10px"><b>2. 支氣管擴張劑反應性（BDR）</b></p>
-          <div class="numrow">
-            <div class="field"><label>給藥前 FEV₁（L）</label><input type="number" step="0.01" id="i_pre" placeholder="2.10" value="${S.obj.pre??''}"></div>
-            <div class="field"><label>給藥後 FEV₁（L）</label><input type="number" step="0.01" id="i_post" placeholder="2.55" value="${S.obj.post??''}"></div>
-            ${isChild?`<div class="field"><label>預測 FEV₁（L）</label><input type="number" step="0.01" id="i_pred" placeholder="2.30" value="${S.obj.pred??''}"></div>`:''}
-          </div>
-          <p class="small muted" style="margin:8px 0 0">${isChild?'標準：FEV₁ ↑ ≥12% <b>預測值</b>':'標準：FEV₁ 或 FVC ↑ ≥12% <b>且</b> ≥200 mL'}　·　給 200–400 mcg salbutamol 後 10–15 分測</p>
+          <p class="small" style="margin:0 0 10px"><b>2. PEF 2 週平均每日變異</b></p>
+          <div class="numrow">${field('pef','變異度（%）','14','0.1')}</div>
+          <p class="small muted" style="margin:8px 0 0">標準：${isChild?'&gt;13%':'&gt;10%'}</p>
         </div>
         <div class="card pad">
-          <p class="small" style="margin:0 0 10px"><b>3. PEF 平均每日變異度（2 週）</b></p>
-          <div class="numrow"><div class="field"><label>變異度（%）</label><input type="number" step="0.1" id="i_pef" placeholder="14" value="${S.obj.pef??''}"></div></div>
-          <p class="small muted" style="margin:8px 0 0">閾值：${isChild?'&gt; 13%':'&gt; 10%'}</p>
+          <p class="small" style="margin:0 0 10px"><b>3. FeNO（輔助，不是可變性證據）</b></p>
+          <div class="numrow">${field('feno','FeNO（ppb）','45','1')}</div>
+          <p class="small muted" style="margin:8px 0 0">支持 Type 2：${isChild?'兒童 &gt;35 ppb':'成人與青少年 &gt;50 ppb'}；低值<b>不能排除</b>氣喘</p>
         </div>
         <div class="card pad">
-          <p class="small" style="margin:0 0 10px"><b>4. FeNO（輔助）</b></p>
-          <div class="numrow"><div class="field"><label>FeNO（ppb）</label><input type="number" step="1" id="i_feno" placeholder="45" value="${S.obj.feno??''}"></div></div>
-          <p class="small muted" style="margin:8px 0 0">支持 Type 2：${isChild?'兒童 &gt; 35 ppb':'成人／青少年 &gt; 50 ppb'}；低值<b>不能排除</b>氣喘</p>
+          <p class="small" style="margin:0 0 10px"><b>4. FEV₁/FVC（輔助）</b></p>
+          <div class="numrow">${field('ratio','FEV₁/FVC 比值','0.68','0.01')}</div>
+          <p class="small muted" style="margin:8px 0 0">Table 1 不以比值作為可變性標準，只用來看基線有沒有阻塞。</p>
         </div>
       </div>
-      <div class="note" style="margin-top:16px"><b>提高陽性率的準備：</b>檢查前停用支氣管擴張劑 —— SABA ≥4 小時、formoterol 或 salmeterol ≥24 小時、vilanterol 或 indacaterol ≥48 小時。氣喘病人在<b>病毒感染期間</b>可能測不到支氣管擴張劑反應。</div>`;
+      <div class="q" style="margin-top:22px;font-size:15.5px">其他可變性證據（已有結果時勾選）</div>`+h_chks(LX.DX_OTHER,'dxOther')+
+      `
+      <div class="note" style="margin-top:16px"><b>提高陽性率的準備：</b>檢查前停用支氣管擴張劑 —— SABA ≥4 小時、formoterol 或 salmeterol ≥24 小時、vilanterol 或 indacaterol ≥48 小時；LAMA 36–48 小時。氣喘病人在<b>病毒感染期間</b>可能測不到支氣管擴張劑反應。</div>`;
     }
   }
 
@@ -1737,14 +1818,18 @@ function render(){
     if(S.age==='a12'){
       h+=`<div class="q" style="margin-top:24px">使用哪一條路徑？</div><div class="qh">GINA 2026 以 <b>Track 1</b> 為優先。</div>`+
         h_opts([{v:'t1',b:'Track 1（優先）',e:'ICS-formoterol 抗發炎緩解劑，單一吸入器'},
-                {v:'t2',b:'Track 2（替代）',e:'ICS-SABA 或 SABA 緩解劑'}],'track');
+                {v:'t2',b:'Track 2（替代）',e:'ICS-SABA 或 SABA 緩解劑'}],'track')+
+        `<label class="chk ${S.preg?'on':''}" style="margin-top:16px"><input type="checkbox" id="i_preg" ${S.preg?'checked':''}><div><b>目前懷孕</b></div></label>`;
     }
   }
 
   else if(name==='嚴重度'){
     h=`<div class="q">急性發作徵象（勾選所有符合項目）</div>
-       <div class="qh">GINA 2026 Figure 9。輕度須「符合全部」輕度特徵；重度／危及生命只要<b>任一項</b>即成立。&lt;18 歲請併用 <b>PRAM</b> 評分。</div>`+
-       h_chks(ACUTE_SIGNS,'acute')+
+       <div class="qh">GINA 2026 Figure 9。輕度須<b>符合全部</b>輕度特徵；重度或危及生命只要<b>任一項</b>即成立。輕度條件沒有勾齊時，以中度處理。</div>`;
+    if(isPed()) h+=`<div class="card pad" style="padding:14px 16px;margin-bottom:14px"><div class="numrow"><div class="field"><label for="i_pram">PRAM 分數（0–12，選填）</label><input type="number" inputmode="numeric" min="0" max="12" step="1" id="i_pram" value="${S.pram??''}" placeholder="例 5"></div>
+       <span class="small muted" style="padding-bottom:10px">1–3 輕度 · 4–7 中度 · 8–12 重度 · 11–12 急性危及生命</span></div></div>`;
+    SIGN_GROUPS.forEach(([c,t])=>{ h+=`<p class="small" style="margin:14px 0 6px"><b>${t}</b></p>`+h_chks(ACUTE_SIGNS,'acute',s=>s[1]===c); });
+    h+=
        `<div class="note crit" style="margin-top:16px"><b>出現嗜睡、意識混亂或發紺 → 急性危及生命。立即安排轉送、同時開始治療，不要等待評估完成。若同時有過敏性休克，先給 epinephrine。</b></div>`;
   }
 
@@ -1754,7 +1839,7 @@ function render(){
   box.innerHTML = h + `<div class="actions no-print">
     ${idx>0?'<button class="btn plain" id="back">← 上一步</button>':''}
     ${name!=='結果'?`<button class="btn" id="next" ${canNext?'':'disabled'}>下一步 →</button>`:(S.scenario==='tx'&&S.age!=='a5'?'<button class="btn" id="toLadder">在「治療階梯」開啟此個案 →</button>':'')+'<button class="btn plain" id="print">列印／存 PDF</button><button class="btn ghost" id="again">重新評估</button>'}
-    ${name!=='結果'&&!canNext?'<span class="small muted">請先完成本頁選項</span>':''}
+    ${name!=='結果'&&!canNext?`<span class="small muted" id="nexthint">${name==='嚴重度'?'請至少勾選一項徵象'+(isPed()?'或輸入 PRAM':''):'請先完成本頁選項'}</span>`:''}
   </div>`;
   bind();
 }
@@ -1768,6 +1853,7 @@ function validate(){
     return S.cur!==null && S.ctrlDur!==null && (S.age!=='a12'||S.track!==null) && (!needInit||S.init!==null);
   }
   if(name==='控制程度') return S.ctrl.every(v=>v!==null);
+  if(name==='嚴重度') return S.acute.length>0||(isPed()&&LX.pramBand(S.pram)!==null);
   return true;
 }
 
@@ -1785,7 +1871,7 @@ function bind(){
     if(c.checked){ if(!S[k].includes(i)) S[k].push(i); } else S[k]=S[k].filter(x=>x!==i);
     render();
   }));
-  ['ratio','pre','post','pred','pef','feno'].forEach(id=>{
+  ['ratio','pre','post','pred','fvcPre','fvcPost','pefPre','pefPost','pef','feno'].forEach(id=>{
     const el=box.querySelector('#i_'+id);
     if(el) el.addEventListener('input',()=>{ S.obj[id]= el.value===''?undefined:parseFloat(el.value); });
   });
@@ -1793,6 +1879,13 @@ function bind(){
   const bk=box.querySelector('#back'); if(bk) bk.addEventListener('click',()=>{S.demo=null;idx--;render();window.scrollTo({top:0,behavior:'smooth'});});
   const pr=box.querySelector('#print'); if(pr) pr.addEventListener('click',()=>window.print());
   const ag=box.querySelector('#again'); if(ag) ag.addEventListener('click',reset);
+  const pg=box.querySelector('#i_preg'); if(pg) pg.addEventListener('change',()=>{S.preg=pg.checked;render();});
+  const pm=box.querySelector('#i_pram'); if(pm) pm.addEventListener('input',()=>{
+    S.pram=pm.value===''?null:parseFloat(pm.value);
+    const nb=box.querySelector('#next'), hint=box.querySelector('#nexthint');
+    if(nb) nb.disabled=!validate();
+    if(hint) hint.hidden=validate();
+  });
   const tl=box.querySelector('#toLadder'); if(tl) tl.addEventListener('click',()=>{LXUI.load(wizToLadder());document.querySelector('nav.tabs button[data-view="v-tx"]').click();});
 }
 
@@ -1818,68 +1911,45 @@ function resDx(){
     return h+refBox();
   }
 
-  const o=S.obj, sxN=S.sx.length;
-  let pos=[], neg=[], missing=[];
-  const ratioCut = isChild?0.90:0.80;
-  if(o.ratio!=null){
-    if(o.ratio<ratioCut) pos.push(`FEV₁/FVC = <b>${o.ratio}</b>，低於 ${isChild?'0.90':'0.75–0.80'}，符合氣流受限`);
-    else neg.push(`FEV₁/FVC = <b>${o.ratio}</b>，未達阻塞標準（${isChild?'&lt;0.90':'&lt;0.75–0.80'}）`);
-  } else missing.push('FEV₁/FVC 比值');
+  const r=LX.dxEval({age:S.age,sx:S.sx,obj:S.obj,other:S.dxOther});
+  const V={
+    confirmed:['v-ok','符合氣喘診斷','同時具備典型症狀病史與已證實的可變呼氣氣流受限。'],
+    objOnly:['v-warn','客觀證據陽性，但症狀病史不夠典型','請重新確認病史，並擴大鑑別診斷（COPD、誘發性喉阻塞、支氣管擴張症、心衰竭）。'],
+    sxOnly:['v-warn','症狀支持，但尚未證實可變氣流受限','單次檢查陰性<b>不能排除氣喘</b>；沒有症狀、近期用過支氣管擴張劑或病毒感染期間都可能測不到。'],
+    sxT2:['v-warn','症狀典型、FeNO 支持 Type 2，但尚無可變性證據','肺量計或 PEF 無法取得時，FeNO 升高可<b>支持</b> Type 2 氣喘；若其他診斷不太可能，可經驗性給予含 ICS 治療，1–3 個月後複評。'],
+    needTests:['v-info','症狀典型，尚無可判讀的客觀檢查','請完成用藥前後肺量計或 PEF 以證實可變氣流受限，<b>最好在開始 ICS 之前</b>。'],
+    insufficient:['v-info','資料不足，尚無法判定','典型病史要有喘鳴、呼吸短促、胸悶或咳嗽，並具備支持特徵。請補齊症狀型態與客觀檢查後再評估。']
+  }[r.key];
 
-  if(o.pre!=null&&o.post!=null&&o.pre>0){
-    const dL=o.post-o.pre, pct=dL/o.pre*100;
-    let ok,txt;
-    if(isChild){
-      if(o.pred!=null&&o.pred>0){ const pp=dL/o.pred*100; ok=pp>=12; txt=`ΔFEV₁ = ${(dL*1000).toFixed(0)} mL，佔<b>預測值 ${pp.toFixed(1)}%</b>（兒童標準 ≥12% 預測值）`; }
-      else { ok=false; txt=`ΔFEV₁ = ${(dL*1000).toFixed(0)} mL（較基線 ${pct.toFixed(1)}%）—— <b>未輸入預測值</b>，兒童標準須以 % 預測值判讀`; }
-    } else {
-      ok = pct>=12 && dL*1000>=200;
-      txt=`ΔFEV₁ = <b>${(dL*1000).toFixed(0)} mL</b>（較給藥前 <b>${pct.toFixed(1)}%</b>）；成人標準 ≥12% <u>且</u> ≥200 mL`;
-    }
-    (ok?pos:neg).push('支氣管擴張劑反應性：'+txt);
-  } else missing.push('支氣管擴張劑反應性（前後 FEV₁）');
-
-  const pefCut = isChild?13:10;
-  if(o.pef!=null) (o.pef>pefCut?pos:neg).push(`PEF 平均每日變異度 = <b>${o.pef}%</b>（標準 &gt;${pefCut}%）`);
-  else missing.push('PEF 平均每日變異度');
-
-  const fenoCut = isChild?35:50;
-  let fenoNote='';
-  if(o.feno!=null){
-    fenoNote = o.feno>fenoCut
-      ? `<div class="note info" style="margin-top:12px"><b>FeNO = ${o.feno} ppb（&gt;${fenoCut}）</b>：在有典型症狀的病人可<b>支持 Type 2 氣喘</b>診斷，但也可能來自非氣喘疾病，不能單獨診斷。</div>`
-      : `<div class="note" style="margin-top:12px"><b>FeNO = ${o.feno} ppb</b>：未達支持門檻（&gt;${fenoCut}）。<b>低值不能排除氣喘</b>——FeNO 受性別、年齡、抽菸、儀器與時辰影響，清晨較低。</div>`;
-  }
-
-  const objPos=pos.some(p=>!p.startsWith('FEV₁/FVC'));
-  let v;
-  if(objPos && sxN>=3) v=['v-ok','符合氣喘診斷','同時具備典型症狀型態與已證實的可變呼氣氣流受限。'];
-  else if(objPos) v=['v-warn','客觀證據陽性，但症狀型態不夠典型','請重新確認病史，並擴大鑑別診斷（COPD、聲帶功能異常、支氣管擴張症、心衰竭）。'];
-  else if(sxN>=3) v=['v-warn','症狀支持，但尚未證實可變氣流受限','單次檢查陰性<b>不能排除氣喘</b>——症狀輕微、近期用過支氣管擴張劑或病毒感染期間常見。'];
-  else v=['v-info','資料不足，尚無法判定','請補齊症狀型態與客觀檢查後再評估。'];
-
-  h+=`<div class="verdict ${v[0]}"><h3>${v[1]}</h3><p>${v[2]}</p></div>
-  <div class="grid2" style="margin-bottom:16px">
-    <div class="rx"><div class="rx-h t1">達標的判讀（${pos.length}）</div><div class="rx-b">${pos.length?'<ul class="checklist">'+pos.map(x=>`<li>${x}</li>`).join('')+'</ul>':'<span class="muted small">無</span>'}</div></div>
-    <div class="rx"><div class="rx-h t2">未達標準／缺項</div><div class="rx-b">
-      ${neg.length?'<ul class="checklist">'+neg.map(x=>`<li>${x}</li>`).join('')+'</ul>':''}
-      ${missing.length?`<p class="small muted" style="margin:${neg.length?'10px':'0'} 0 0">未輸入：${missing.join('、')}</p>`:''}
-      ${!neg.length&&!missing.length?'<span class="muted small">無</span>':''}
+  h+=`<div class="verdict ${V[0]}"><h3>${V[1]}</h3><p>${V[2]}</p></div>`;
+  if(r.bad.length) h+=`<div class="note crit" style="margin-bottom:14px">有數值超出合理範圍，<b>沒有納入判讀</b>。請檢查單位：FEV₁、FVC 用公升，PEF 用 L/min，變異度用 %。</div>`;
+  h+=`<div class="grid2" style="margin-bottom:16px">
+    <div class="rx"><div class="rx-h t1">可變氣流受限：達標（${r.pos.length}）</div><div class="rx-b">${r.pos.length?'<ul class="checklist">'+r.pos.map(x=>`<li>${x}</li>`).join('')+'</ul>':'<span class="muted small">無</span>'}</div></div>
+    <div class="rx"><div class="rx-h t2">未達標準／無法判讀／缺項</div><div class="rx-b">
+      ${r.neg.length?'<ul class="checklist">'+r.neg.map(x=>`<li>${x}</li>`).join('')+'</ul>':''}
+      ${r.ind.length?'<ul class="checklist">'+r.ind.map(x=>`<li>${x}</li>`).join('')+'</ul>':''}
+      ${r.missing.length?`<p class="small muted" style="margin:${r.neg.length||r.ind.length?'10px':'0'} 0 0">未輸入：${r.missing.join('、')}</p>`:''}
+      ${!r.neg.length&&!r.ind.length&&!r.missing.length?'<span class="muted small">無</span>':''}
     </div></div></div>
-  <div class="rx"><div class="rx-h t1">症狀型態</div><div class="rx-b">符合 <b>${sxN}/6</b> 項支持氣喘的特徵${sxN?'：'+S.sx.map(i=>SX[i].replace(/<[^>]+>/g,'')).join('、'):''}</div></div>`+fenoNote;
+  <div class="rx"><div class="rx-h t1">症狀病史</div><div class="rx-b">${S.sx.includes(0)?'有典型症狀':'<b>未勾選典型症狀</b>'}；支持特徵 <b>${r.feat}/5</b> 項${r.feat?'：'+S.sx.filter(i=>i>0).map(i=>SX[i].replace(/<[^>]+>/g,'')).join('、'):''}</div></div>`;
+  if(r.ratioTxt) h+=`<div class="note small" style="margin-top:12px">${r.ratioTxt}</div>`;
+  if(r.feno!=null) h+=r.fenoHigh
+    ?`<div class="note info" style="margin-top:12px"><b>FeNO ${r.feno} ppb（&gt;${r.fenoCut}）</b>：在有典型症狀的病人可<b>支持 Type 2 氣喘</b>，但也可能來自非氣喘疾病，不能單獨診斷，也不是可變性證據。</div>`
+    :`<div class="note" style="margin-top:12px"><b>FeNO ${r.feno} ppb</b>：未達支持門檻（&gt;${r.fenoCut}）。<b>低值不能排除氣喘</b>；FeNO 受性別、年齡、抽菸、儀器與時辰影響，清晨較低。</div>`;
 
   h+=`<div class="rx" style="margin-top:16px"><div class="rx-h t1">建議下一步</div><div class="rx-b"><ul class="checklist">`;
-  if(objPos&&sxN>=3){
-    h+=`<li><b>把診斷依據記錄在病歷</b>——治療後再確診會困難得多</li>
+  if(r.key==='confirmed'){
+    h+=`<li><b>把診斷依據記錄在病歷</b>，治療後再確診會困難得多</li>
         <li>開始含 ICS 的治療；起始階層見「治療階梯」分頁的<b>初始治療表</b></li>
         <li>記錄症狀控制與風險因子、可行時評估肺功能</li>
         <li>訓練吸入器使用並檢查技巧、提供書面行動計畫、安排回診</li>`;
   } else {
-    h+=`<li><b>在症狀發作期間重測</b>肺功能，或加做其他檢查</li>
-        <li>檢查前停用支氣管擴張劑：SABA ≥4 小時、formoterol/salmeterol ≥24 小時、vilanterol/indacaterol ≥48 小時</li>
-        <li>安排 <b>1–2 週 PEF 日誌</b>（每次測 3 下取最高、同一台機器），或支氣管激發試驗</li>
-        <li>肺量計／PEF 無法取得或陰性但高度懷疑時，可參考 <b>FeNO 或血液嗜酸性球</b></li>
-        <li>若其他診斷不太可能：可<b>經驗性給予含 ICS 治療，1–3 個月後複評</b>；未改善則轉診上級</li>`;
+    h+=`<li><b>在有症狀時重測</b>肺功能，或加做其他檢查</li>
+        <li>檢查前停用支氣管擴張劑：SABA ≥4 小時、formoterol/salmeterol ≥24 小時、vilanterol/indacaterol ≥48 小時、LAMA 36–48 小時</li>
+        <li>安排 <b>2 週 PEF 日誌</b>（早晚各測、每次測 3 下取最高、同一台機器），或支氣管激發試驗</li>
+        <li>肺量計或 PEF 無法取得或陰性但高度懷疑時，可參考 <b>FeNO 或血液嗜酸性球</b></li>
+        <li>若其他診斷不太可能：可<b>經驗性給予含 ICS 治療，1–3 個月後複評</b>；未改善則轉診上級</li>
+        <li>若以嚴重未控制症狀表現，先<b>當作急性發作處理</b></li>`;
   }
   h+=`</ul></div></div>`;
   return h+refBox();
@@ -1898,7 +1968,7 @@ function wizToLadder(){
     st.ctx='maint';
     st.m={track:S.age==='a12'?(S.track==='t2'?'t2a':'t1'):'t2a',step:S.cur,c1:'icssaba',
       ctl:{day:S.ctrl[0]===1,night:S.ctrl[1]===1,rel:S.ctrl[2]===1,act:S.ctrl[3]===1},
-      exac:S.risk.includes(7)?'1':'0',fev1:'',stable:S.ctrlDur==='ge3'?'3':'0',
+      exac:S.risk.includes(7)?'1':'0',fev1:'',stable:S.ctrlDur==='ge3'?'3':'0',preg:S.age==='a12'&&S.preg,
       checks:{adh:true,tech:true,risk:true,comorb:true,dx:true}};
     st.m.__eng={...st.m,age:st.age,icu:S.risk.includes(8),riskN:S.risk.length};
   }
@@ -2003,40 +2073,48 @@ function resTx(){
 }
 
 function resAcute(){
-  const life=S.acute.filter(i=>ACUTE_SIGNS[i][1]==='life').length;
-  const sev =S.acute.filter(i=>ACUTE_SIGNS[i][1]==='sev').length;
-  const mod =S.acute.filter(i=>ACUTE_SIGNS[i][1]==='mod').length;
-  let key,lvl,v;
-  if(life>0){key='life';lvl='急性危及生命 Acutely life-threatening';v='v-bad';}
-  else if(sev>0){key='sev';lvl='重度或危及生命 Severe / life-threatening';v='v-bad';}
-  else if(mod>0){key='mod';lvl='中度 Moderate';v='v-warn';}
-  else {key='mild';lvl='輕度 Mild';v='v-ok';}
-  const adult=S.age==='a12';
+  const r=LX.acuteClassify(ACUTE_SIGNS.map(s=>s[1]),S.acute,isPed()?S.pram:null), key=r.key;
+  const [lvl,v]={life:['急性危及生命 Acutely life-threatening','v-bad'],sev:['重度或危及生命 Severe / life-threatening','v-bad'],mod:['中度 Moderate','v-warn'],mild:['輕度 Mild','v-ok']}[key];
+  const ad=S.age==='ad18', teen=S.age==='a1217', a5=S.age==='a5', adult=ad||teen;
+  const ageLab={ad18:'成人 ≥18 歲',a1217:'青少年 12–17 歲',a611:'兒童 6–11 歲',a5:'幼兒 ≤5 歲'}[S.age];
+  const ocs=ad?'prednisolone <span class="dose">40–50 mg 每天早上 × 5–7 天</span>'
+    :teen?'成人劑量 prednisolone <span class="dose">40–50 mg × 5–7 天</span>，或兒童劑量 <span class="dose">1–2 mg/kg/day（上限 40 mg）× 3–5 天</span>（依體型判斷）'
+    :a5?'prednisolone <span class="dose">1–2 mg/kg/day，&lt;2 歲上限 20 mg、2–5 歲上限 30 mg，× 3–5 天</span> <span class="badge src">完整報告</span>'
+    :'prednisolone <span class="dose">1–2 mg/kg/day（上限 40 mg）每天早上 × 3–5 天</span>';
 
-  let h=`<div class="verdict ${v}"><h3>${lvl}</h3><p>勾選徵象：危及生命 ${life} · 重度 ${sev} · 中度 ${mod}${S.age!=='a12'?' ｜ &lt;18 歲請併用 <b>PRAM</b> 評分':''}</p></div>`;
+  let h=`<div class="verdict ${v}"><h3>${lvl}</h3><p>勾選徵象：危及生命 ${r.counts.life} · 重度 ${r.counts.sev} · 中度 ${r.counts.mod} · 輕度 ${r.counts.mild}/${r.counts.mildTotal}${r.pramBand?` ｜ PRAM ${S.pram}`:isPed()?' ｜ &lt;18 歲建議併用 <b>PRAM</b>':''}</p></div>`;
+  if(r.incomplete) h+=`<div class="note" style="margin-bottom:16px">輕度條件沒有全部符合（${r.counts.mild}/${r.counts.mildTotal}），<b>以中度處理</b>。若其實全部符合，請回上一步勾齊。</div>`;
+  if(a5) h+=`<div class="note crit" style="margin-bottom:16px"><b>≤5 歲不在 Figure 9 範圍</b>（適用 ≥6 歲）。以下劑量取自 GINA 完整報告的學齡前章節，<b>使用前請核對原文</b>。</div>`;
 
   if(key==='life'||key==='sev'){
-    h+=`<div class="note crit" style="margin-bottom:16px;font-size:15px"><b>立即安排轉送急性照護機構，同時馬上開始治療。</b>若同時有過敏性休克，<b>先給 epinephrine（IM 或鼻用）</b>。</div>`;
+    h+=`<div class="note crit" style="margin-bottom:16px;font-size:15px"><b>立即安排轉送急性照護機構，同時馬上開始治療。</b>若同時有過敏性休克，<b>先給 epinephrine（IM 或鼻用）</b>。${key==='life'||S.acute.includes(3)?'<br><b>嗜睡、意識混亂或安靜胸廓：轉加護病房。</b>':''}</div>`;
   }
 
-  h+=`<div class="rx"><div class="rx-h t1">處置 · ${adult?'成人／青少年':(S.age==='a611'?'兒童 6–11 歲':'幼兒 ≤5 歲')} · ${lvl}</div><div class="rx-b"><ul class="checklist">`;
-  if(key==='mild'){
+  h+=`<div class="rx"><div class="rx-h t1">處置 · ${ageLab} · ${lvl}</div><div class="rx-b"><ul class="checklist">`;
+  if(a5){
+    h+=`<li><b>Salbutamol 2–6 puffs</b>（100 mcg/puff）pMDI ＋ <b>附面罩儲霧艙</b>（或 2.5 mg 霧化），第 1 小時內必要時<b>每 20 分鐘</b>重複</li>
+        <li>給氧，目標 SpO₂ <b>94–98%</b></li>
+        ${key==='mild'?'<li>輕度通常不需口服類固醇；1 小時內複評</li>':`<li>${key==='mod'?'考慮':'給予'}口服類固醇：${ocs}</li>`}
+        ${key==='sev'||key==='life'?'<li>可取得時加 <b>ipratropium 80 mcg（4 puffs）或 250 mcg 霧化</b>，每 20 分鐘，<b>僅限第 1 小時</b></li>':''}`;
+  } else if(key==='mild'){
     h+=`<li><b>Salbutamol 4 puffs</b> pMDI ＋ spacer，<b>或 budesonide-formoterol 160/4.5 mcg 2 puffs</b> <span class="badge new">2026</span></li>
         <li>評估反應，必要時 <b>30–60 分鐘後再給一次</b></li>
         <li><b>輕度發作通常不需口服類固醇</b></li>`;
   } else if(key==='mod'){
     h+=`<li><b>Salbutamol 4–6 puffs</b> pMDI ＋ spacer（或 <b>2.5 mg 霧化</b>），必要時最多 <b>3 次</b>、間隔 20–30 分鐘</li>
         <li>若需要且可取得 <b>ipratropium</b>：每次隨 salbutamol 給 <b>4 puffs</b>，最多 3 次</li>
-        <li><b>開始口服類固醇</b>：${adult?'prednisolone <span class="dose">40–50 mg 每天早上 × 5–7 天</span>':'prednisolone <span class="dose">1–2 mg/kg/day（上限 40 mg）每天早上 × 3–5 天</span>'}</li>`;
+        <li>必要時控制流量給氧，目標 SpO₂ <b>92–95%</b></li>
+        <li><b>開始口服類固醇</b>：${ocs}</li>`;
   } else {
     h+=`<li><b>Salbutamol 6–10 puffs</b> pMDI ＋ spacer（或 <b>5 mg 霧化</b>），必要時<b>每 20–30 分鐘</b>重複</li>
-        <li>可取得時：每次隨 salbutamol 給 <b>ipratropium 4 puffs</b></li>
+        <li>可取得時：每次隨 salbutamol 給 <b>ipratropium 4 puffs</b>，最多 <b>3 次</b></li>
         <li><b>給氧</b>，目標飽和度 <b>92–95%</b></li>
-        <li><b>給全身性類固醇</b>：${adult?'prednisolone <span class="dose">40–50 mg 每天早上 × 5–7 天</span>':'prednisolone <span class="dose">1–2 mg/kg/day（上限 40 mg）每天早上 × 3–5 天</span>'}</li>
+        <li><b>給全身性類固醇</b>：${ocs}</li>
         <li><b>持續監測</b></li>`;
   }
   h+=`<li><b>不要</b>常規做胸部 X 光或血液氣體分析、<b>不要</b>常規開抗生素、<b>不使用鎮靜劑</b></li>
-      <li><b>1 小時內（或更早）複評</b>：血氧、呼吸速率、輔助肌使用、進氣量、PEF；&lt;18 歲重測 PRAM。<b>惡化或未改善 → 轉送更高層級照護</b></li>
+      <li><b>1 小時內（或更早）複評</b>：血氧、呼吸速率、輔助肌使用、進氣量、PEF${isPed()?'；&lt;18 歲重測 PRAM':''}。<b>惡化或未改善 → 轉送更高層級照護</b></li>
+      <li>考慮其他急性喘的原因：氣胸、過敏性休克、誘發性喉阻塞、肺炎、急性心衰竭、肺栓塞、異物吸入</li>
   </ul>
   <div class="note small" style="margin-top:12px"><b>給藥技巧：</b>salbutamol 100 mcg/puff、ipratropium 20 mcg/puff。用 spacer <b>一次只按一下</b>；太喘無法單次深吸閉氣者改用<b>潮氣呼吸</b>。<b>salbutamol 每次按壓前都要搖勻</b>。呼吸道感染或高度懷疑感染者<b>避免使用霧化器</b>。</div>
   <div class="note small" style="margin-top:10px">脈搏血氧儀在<b>膚色較深</b>的低血氧病人可能<b>高估</b>血氧；高海拔地區正常值本就較低，目標值需調整。</div>
@@ -2051,7 +2129,7 @@ function resAcute(){
     </ul></div></div>
     <div class="rx"><div class="rx-h t2">出院前必做</div><div class="rx-b"><ul class="checklist">
       <li>記錄診斷（若已確認）</li>
-      <li><b>開始或增加含 ICS 的治療</b>——${adult?'<b>≥12 歲優先 ICS-formoterol MART</b>；若無法取得，用每日規律中劑量 ICS-LABA（Track 2 Step 4）':'6–11 歲：中劑量 ICS-LABA ＋ 需要時 ICS-SABA 或 SABA，或 ICS-formoterol MART'}</li>
+      <li><b>開始或增加含 ICS 的治療</b>——${adult?'<b>≥12 歲優先 Step 4 ICS-formoterol MART</b>；若無法取得，用每日規律中劑量 ICS-LABA（Track 2 Step 4）':a5?'≤5 歲：開始或增加每日 ICS（pMDI ＋ 附面罩儲霧艙），依完整報告調整':'6–11 歲 Step 4：中劑量 ICS-LABA ＋ 需要時 ICS-SABA 或 SABA，或低劑量 ICS-formoterol MART'}</li>
       <li>緩解劑改為<b>需要時使用，不是規律使用</b></li>
       <li>訓練吸入技巧（pMDI 要用 spacer）並強化順從性</li>
       <li>若已開始口服類固醇，依療程服完</li>
@@ -2078,7 +2156,7 @@ function refBox(){
 }
 
 function reset(){
-  Object.assign(S,{scenario:null,age:null,sx:[],obj:{},dxClin:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[],demo:null});
+  Object.assign(S,{scenario:null,age:null,sx:[],obj:{},dxClin:[],dxOther:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[],pram:null,preg:false,demo:null});
   idx=0; render(); window.scrollTo({top:0,behavior:'smooth'});
 }
 document.getElementById('restart').addEventListener('click',reset);
@@ -2108,7 +2186,7 @@ const CASES=[
  story:'24 歲男性，從未診斷過氣喘。感冒 3 天後喘鳴越來越厲害，只能說片語，坐著比躺著舒服，沒有過敏性休克的表現。',
  data:[['生命徵象','呼吸 26/min，室內空氣 SpO2 93%，意識清楚'],['理學檢查','使用輔助呼吸肌、呼氣喘鳴、進氣量減少'],['PEF','預測值的 60%']],
  ask:'這次屬於哪一級？怎麼處理？病情穩定後，出院要開什麼？',
- load:[{label:'帶入決策精靈：急性發作',wiz:{scenario:'ac',age:'a12',acute:[10,11,12,13,14,15,16]}},
+ load:[{label:'帶入決策精靈：急性發作',wiz:{scenario:'ac',age:'ad18',acute:[8,9,10,11,12,13,14]}},
        {label:'帶入治療階梯：起始治療',ladder:{age:'adult',ctx:'init',init:INIT({days:'daily',lf:'na',acute:true})}}],
  expect:[{verdict:'中度 Moderate'},{step:4,row:5}],
  points:['沒有任何一項重度徵象（呼吸 >30/min、SpO2 <92%、PEF <50%、無法說話或平躺、安靜胸廓），屬中度。','Salbutamol 4–6 噴（pMDI＋spacer），必要時間隔 20–30 分鐘、最多 3 次；需要時每次加 ipratropium 4 噴；開始 prednisolone 40–50 mg 每天早上，共 5–7 天。需要給氧時，目標 SpO2 92–95%。','不要常規照胸部 X 光、驗血氣或開抗生素，也不要用鎮靜藥。1 小時內重新評估。','初次表現就是急性發作：起始治療為中劑量 MART（budesonide-formoterol 160/4.5 mcg 早晚各 2 吸＋需要時 1 吸）。沒有 ICS-formoterol 時，改用中劑量 ICS-LABA＋需要時 ICS-SABA 或 SABA。','安排 2–7 天內追蹤，給暫時性書面行動計畫。氣流變異的證據要記錄在病歷，尚未取得時在後續回診確認。'],
@@ -2167,7 +2245,7 @@ const QUIZ=[
 {id:'q12',level:'adv',topic:'用藥中確認診斷',stem:'用低劑量 ICS 三年的成人，病歷沒有診斷依據。目前症狀很少，FEV1 82% 預測值。如何確認診斷？',opts:['直接停 ICS，1 週後做可逆性測試再決定是否恢復','升到下一階，1–2 個月後再測肺功能','不必確認，既有診斷足以繼續治療','降階 ICS，2–4 週後再測，給行動計畫'],ans:3,why:'症狀少、肺功能 >70%：考慮降階，2–4 週後再測，並給書面行動計畫。症狀多且肺功能 <70% 才是升階、1–2 個月後再測。基層 25–35% 的氣喘診斷可能不正確。',src:G+'p.9'},
 {id:'q13',level:'adv',topic:'緩解藥搭配',stem:'每日用 fluticasone furoate-vilanterol 的病人，要選緩解藥。下列何者可以？',opts:['SABA 或 ICS-SABA，維持藥照用','ICS-formoterol，維持藥照用','多吸一次 fluticasone furoate-vilanterol','單方長效 LABA，維持藥照用'],ans:0,why:'維持藥是非 formoterol 的 ICS-LABA 時，不可用 ICS-formoterol 當緩解藥，應用 SABA 或 ICS-SABA。想用 ICS-formoterol 緩解，就整個改為 MART。',src:G+'p.26、p.34'},
 {id:'q14',level:'adv',topic:'6–11 歲 MART',stem:'9 歲，Step 3 低劑量 MART（80/4.5 mcg 每日 1 次＋需要時 1 吸），技巧與順從性都好，仍未控制。Step 4 的 MART 怎麼開？',opts:['每日 1 次、每次 2 吸＋需要時 2 吸','每日 2 次、每次 1 吸＋需要時 1 吸','每日 2 次、每次 2 吸＋需要時 1 吸','改用 160/4.5 mcg，每日 1 次＋需要時 1 吸'],ans:1,why:'6–11 歲 Step 4 MART 的劑量是 Step 3 的兩倍，仍屬低每日劑量。每日 2 次、每次 2 吸是 ≥12 歲的 Step 4–5。此階段也要考慮轉介；6–11 歲不建議 Step 5 MART。',src:G+'Figure 8（p.29）、p.30、Table 7（p.45）'},
-{id:'q15',level:'adv',topic:'懷孕',stem:'懷孕 24 週，控制良好已 5 個月，擔心藥物影響胎兒，想減藥。如何處理？',opts:['ICS 減 25–50%，產後再回原劑量','第三孕期前停 ICS，只留 SABA','不減也不停含 ICS 治療，每 4–6 週追蹤','改用每日 LTRA，避免胎兒暴露 ICS'],ans:2,why:'孕期不要停用或減少含 ICS 的治療；發作會增加早產、低出生體重與周產期死亡，ICS 可降低這些風險。也不做激發試驗。注意：本頁治療階梯沒有懷孕欄位，懷孕者不要依它的降階結果減藥。',src:G+'p.9、p.27、p.31'},
+{id:'q15',level:'adv',topic:'懷孕',stem:'懷孕 24 週，控制良好已 5 個月，擔心藥物影響胎兒，想減藥。如何處理？',opts:['ICS 減 25–50%，產後再回原劑量','第三孕期前停 ICS，只留 SABA','不減也不停含 ICS 治療，每 4–6 週追蹤','改用每日 LTRA，避免胎兒暴露 ICS'],ans:2,why:'孕期不要停用或減少含 ICS 的治療；發作會增加早產、低出生體重與周產期死亡，ICS 可降低這些風險。也不做激發試驗。治療階梯勾選「目前懷孕」後，也不會建議降階。',src:G+'p.9、p.27、p.31'},
 {id:'q16',level:'adv',topic:'出院判斷',stem:'中度發作治療後，距最後一次 salbutamol 已 2 小時，達輕度標準，室內 SpO2 94%，PEF 65%，家中有人照顧。如何決定？',opts:['可以出院，已達輕度標準','可以出院，SpO2 ≥92% 就足夠','立即轉加護病房治療','暫不出院，PEF 尚未超過 70%'],ans:3,why:'出院要同時符合：維持輕度標準 1–2 小時、室內 SpO2 ≥92%、PEF 改善且 >70%、家中資源足夠。本例 PEF 65%，尚未達標。',src:G+'Figure 9（p.36）'},
 {id:'q17',level:'adv',topic:'加 LAMA 的時機',stem:'低劑量 ICS-LABA＋需要時 SABA，技巧與順從性都好，一年發作兩次。下一步？',opts:['ICS 升到至少中劑量，或改 MART','ICS 不動，加上 LAMA，下次回診再評估反應','ICS 不動，加上 LTRA','開始維持性低劑量 OCS'],ans:0,why:'有發作的病人，加 LAMA 前要先把 ICS 升到至少中劑量，或改 MART。LAMA 只少量改善肺功能與發作，對症狀沒有臨床上重要的改善。',src:G+'p.26、Table 5（p.40）'},
 {id:'q18',level:'adv',topic:'生物製劑年齡',stem:'下列生物製劑中，GINA 列為 ≥18 歲才可使用的是？',opts:['Mepolizumab','Benralizumab','Reslizumab','Tezepelumab'],ans:2,why:'Reslizumab（靜脈注射）≥18 歲；mepolizumab、omalizumab、dupilumab ≥6 歲；benralizumab、depemokimab、tezepelumab ≥12 歲。',src:G+'p.26、Table 5（p.41–42）'},
@@ -2223,7 +2301,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const {CASES,QUIZ,MAP}=TEACH;
 const showTab=view=>document.querySelector(`nav.tabs button[data-view="${view}"]`).click();
 const ACTION={stay:'維持目前治療',down:'可以考慮降階',up:'建議升階',consider:'考慮升階或同階換藥',fix:'先處理可調整的因素',severe:'進入重度氣喘評估'};
-const blankWiz=()=>({scenario:null,age:null,sx:[],obj:{},dxClin:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[],demo:null});
+const blankWiz=()=>({scenario:null,age:null,sx:[],obj:{},dxClin:[],dxOther:[],ctrl:[null,null,null,null],risk:[],track:null,cur:null,init:null,ctrlDur:null,acute:[],pram:null,preg:false,demo:null});
 
 /* ---- cases ---- */
 function ladderOutcome(st){
