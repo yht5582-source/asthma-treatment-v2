@@ -111,5 +111,54 @@ t('ICU alert is stop-level', a[0][0] === 'stop');
 t('FEV1 <60 and exac listed', a.some(x => x[2].includes('FEV₁ 50%') && x[2].includes('1 次')));
 t('lf chip suppresses duplicate FEV1 line', !LX.riskAlerts(new Set(['lf']), 50, 0).some(x => x[2].includes('FEV₁ 50%')));
 
+/* --- teaching tabs: data shape, and cases / quiz checked against the engine --- */
+const tsrc = html.slice(html.indexOf('/*TEACH-START*/'), html.indexOf('/*TEACH-END*/'));
+const tm = { exports: {} };
+new Function('module', tsrc)(tm);
+const { CASES, QUIZ, MAP } = tm.exports;
+t('6 cases', CASES.length === 6);
+t('unique case ids', new Set(CASES.map(c => c.id)).size === 6);
+CASES.forEach(c => {
+  t(c.id + ' complete', c.story && c.ask && c.points.length >= 3 && c.trap && c.src && c.data.length);
+  t(c.id + ' load and expect line up', c.load.length && c.load.length === c.expect.length);
+  c.load.forEach((l, k) => {
+    const e = c.expect[k];
+    if (l.wiz) { t(c.id + ' wizard case has expected verdict', !!e.verdict); return; }
+    const d = l.ladder;
+    if (d.ctx === 'init') {
+      const r = LX.initial(Object.assign({}, d.init, { age: d.age }));
+      t(c.id + ' initial step ' + e.step, r.step === e.step && r.row === e.row);
+    } else {
+      const rk = new Set(d.risk || []);
+      const o = LX.ongoing(Object.assign({}, d.m, { age: d.age, icu: rk.has('icu'), riskN: LX.riskCount(rk, d.m.fev1, d.m.exac) }));
+      t(c.id + ' action ' + e.action, o.action === e.action && o.to === e.to && (e.next == null || o.next === e.next));
+    }
+  });
+});
+const c1 = CASES[0].load[0].wiz.obj;
+t('c1 BDR numbers: +200 mL but 6.5%', Math.round((c1.post - c1.pre) * 1000) === 200 && Math.abs((c1.post - c1.pre) / c1.pre * 100 - 6.45) < 0.01 && c1.pef > 10);
+t('c4 child doses stay 80/4.5 and >8', LX.regimen('child', 3).pref.some(p => p.includes('80/4.5') && p.includes('每日 1 次 1 吸')) && CASES[3].points.join('').includes('>8'));
+t('c5 Step 3 MART is half of Step 4', LX.regimen('adult', 3, 't1').t1.ex.includes('早晚各 1 吸') && LX.regimen('adult', 4, 't1').t1.ex.includes('早晚各 2 吸'));
+t('c6 adolescent Step 5 options', ['mepolizumab', 'benralizumab', 'depemokimab', 'dupilumab', 'tezepelumab', 'omalizumab', 'budesonide-formoterol-glycopyrronium'].every(x => s5('adol').includes(x)) && !s5('adol').includes('reslizumab'));
+
+t('20 questions', QUIZ.length === 20);
+t('10 basic + 10 advanced', QUIZ.filter(q => q.level === 'basic').length === 10 && QUIZ.filter(q => q.level === 'adv').length === 10);
+t('unique question ids', new Set(QUIZ.map(q => q.id)).size === 20);
+t('A–D answers 5 each', [0, 1, 2, 3].every(a => QUIZ.filter(q => q.ans === a).length === 5));
+QUIZ.forEach(q => t(q.id + ' complete', q.opts.length === 4 && new Set(q.opts).size === 4 && q.ans >= 0 && q.ans <= 3 && q.stem && q.why && q.src.includes('p.')));
+const longest = QUIZ.filter(q => q.opts[q.ans].length === Math.max(...q.opts.map(o => o.length))).length;
+t('correct option is rarely the unique longest (' + longest + '/20)', longest <= 7);
+const q = id => QUIZ.find(x => x.id === id);
+t('q1 BDR is negative', (2.22 - 2.00) / 2.00 < 0.12 && q('q1').opts[q('q1').ans].includes('陰性'));
+t('q2 pre-exercise SABA not counted → well', LX.control(ctl(0, 0, 0, 0), 't2').level === 'well' && q('q2').ans === 0);
+t('q4 matches Table 3 row 4', ini({ days: 'daily', night: true, lf: 'low', recentExac: true }).step === 4 && q('q4').opts[q('q4').ans].startsWith('中劑量 MART') && LX.regimen('adult', 4, 't1').t1.ex.includes('早晚各 2 吸'));
+t('q6 step-down wording', LX.stepDown('adult', 't1', 4).some(x => x.includes('25–50%')) && q('q6').opts[q('q6').ans].includes('25–50%'));
+t('q11 child BDR under 12% predicted', (1.70 - 1.50) / 2.00 < 0.12 && (1.70 - 1.50) / 1.50 >= 0.12 && q('q11').opts[q('q11').ans].includes('陰性'));
+t('q14 matches child Step 4 MART', LX.regimen('child', 4).pref.some(p => p.includes('每日 2 次、每次 1 吸')) && q('q14').opts[q('q14').ans].startsWith('每日 2 次、每次 1 吸'));
+t('q18 reslizumab only for ≥18', s5('adult').includes('reslizumab') && !s5('adol').includes('reslizumab') && q('q18').opts[q('q18').ans] === 'Reslizumab');
+
+t('map has both sides', MAP.dx.length >= 5 && MAP.tx.length >= 5);
+[...MAP.dx, ...MAP.tx].forEach(b => t('map branch ' + b.t, b.t && b.s && b.l.length >= 3 && b.l.every(x => x.length === 2 && x[0] && x[1])));
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
