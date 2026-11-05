@@ -1269,41 +1269,45 @@ function riskAlerts(set,fev1,exac){
 }
 function riskCount(set,fev1,exac){const f=num(fev1);return set.size+((f!=null&&f<60&&!set.has('lf'))?1:0)+((num(exac)||0)>0?1:0);}
 
-/* Table 1 — diagnosis. age: 'ad18' or 'ch617'. sx: indices into SX (0 = typical symptoms); other: indices into DX_OTHER. FEV1/FVC is not a Table 1 criterion. */
+/* Table 1 — diagnosis. age: 'ad18', 'a1217' or 'a611' (Table 1 children = 6–17; only the FeNO cutoff separates 12–17 from 6–11). sx: indices into SX (0 = typical symptoms); other: indices into DX_OTHER. FEV1/FVC is not a Table 1 criterion. */
 const DX_RANGE={ratio:[0.2,1.2],pre:[0.2,8],post:[0.2,8],pred:[0.2,8],fvcPre:[0.2,10],fvcPost:[0.2,10],pefPre:[30,900],pefPost:[30,900],pef:[0,100],feno:[0,400]};
 const DX_OTHER=['ICS 治療 4 週後明顯改善（成人 FEV₁ 或 FVC ↑ ≥12% 且 ≥200 mL，或 PEF ↑ ≥20%；兒童 FEV₁ ↑ ≥12% 預測值，或 PEF ↑ ≥15%）','支氣管激發試驗陽性（methacholine、過度換氣、高張鹽水、mannitol 或運動）','就診間肺功能變異過大（成人 FEV₁ ≥12% 且 ≥200 mL，或 PEF ≥20%；兒童 FEV₁ ≥12%，或 PEF ≥15%）'];
+const pctOf=(d,b)=>Math.round(d/b*1e6)/1e4; /* so 2.5→2.8 L is exactly 12%, not 11.999… */
 function dxEval({age,sx=[],obj={},other=[]}){
-  const kid=age==='ch617', o={}, bad=[], pos=[], neg=[], ind=[], missing=[];
+  const kid=age!=='ad18', o={}, bad=[], pos=[], neg=[], ind=[], missing=[];
   const r1=x=>Math.round(x*10)/10;
   for(const k in DX_RANGE){const v=num(obj[k]);if(v===null)continue;if(v<DX_RANGE[k][0]||v>DX_RANGE[k][1])bad.push(k);else o[k]=v;}
   let bdr=false, judged=false;
-  if(o.pre!=null&&o.post!=null){
+  const hasFev=o.pre!=null&&o.post!=null, hasFvc=!kid&&o.fvcPre!=null&&o.fvcPost!=null;
+  if(kid&&hasFev){
     bdr=true;
-    const dL=o.post-o.pre, ml=Math.round(dL*1000), pct=dL/o.pre*100;
-    if(kid){
-      if(o.pred!=null){const pp=dL/o.pred*100;judged=true;(pp>=12?pos:neg).push(`可逆性：ΔFEV₁ ${ml} mL，佔<b>預測值 ${r1(pp)}%</b>（兒童標準 ≥12% 預測值）`);}
-      else ind.push(`可逆性：ΔFEV₁ ${ml} mL（較用藥前 ${r1(pct)}%）。兒童要看 <b>% 預測值</b>，請輸入預測 FEV₁`);
-    }else{
-      judged=true;
-      let fvcOk=false, fvcTxt='';
-      if(o.fvcPre!=null&&o.fvcPost!=null){
-        const fL=o.fvcPost-o.fvcPre, fml=Math.round(fL*1000), fp=fL/o.fvcPre*100;
-        fvcOk=fp>=12&&fml>=200;fvcTxt=`；ΔFVC <b>${fml} mL</b>（${r1(fp)}%）`;
-      }
-      ((pct>=12&&ml>=200)||fvcOk?pos:neg).push(`可逆性：ΔFEV₁ <b>${ml} mL</b>（較用藥前 <b>${r1(pct)}%</b>）${fvcTxt}；成人標準 FEV₁ <u>或</u> FVC ≥12% <u>且</u> ≥200 mL`);
+    const dL=o.post-o.pre, ml=Math.round(dL*1000), pct=pctOf(dL,o.pre);
+    if(o.pred!=null){const pp=pctOf(dL,o.pred);judged=true;(pp>=12?pos:neg).push(`可逆性：ΔFEV₁ ${ml} mL，佔<b>預測值 ${r1(pp)}%</b>（兒童標準 ≥12% 預測值）`);}
+    else ind.push(`可逆性：ΔFEV₁ ${ml} mL（較用藥前 ${r1(pct)}%）。兒童要看 <b>% 預測值</b>，請輸入預測 FEV₁`);
+  }else if(!kid&&(hasFev||hasFvc)){
+    bdr=true;judged=true;
+    let ok=false, fevTxt='', fvcTxt='';
+    if(hasFev){
+      const dL=o.post-o.pre, ml=Math.round(dL*1000), pct=pctOf(dL,o.pre);
+      ok=pct>=12&&ml>=200;fevTxt=`ΔFEV₁ <b>${ml} mL</b>（較用藥前 <b>${r1(pct)}%</b>）`;
     }
+    if(hasFvc){
+      const fL=o.fvcPost-o.fvcPre, fml=Math.round(fL*1000), fp=pctOf(fL,o.fvcPre);
+      ok=ok||(fp>=12&&fml>=200);fvcTxt=`ΔFVC <b>${fml} mL</b>（${r1(fp)}%）`;
+    }
+    (ok?pos:neg).push(`可逆性：${[fevTxt,fvcTxt].filter(Boolean).join('；')}；成人標準 FEV₁ <u>或</u> FVC ≥12% <u>且</u> ≥200 mL`);
   }
   if(!bdr&&o.pefPre!=null&&o.pefPost!=null){
     bdr=true;judged=true;
-    const p=(o.pefPost-o.pefPre)/o.pefPre*100, cut=kid?15:20;
+    const p=pctOf(o.pefPost-o.pefPre,o.pefPre), cut=kid?15:20;
     (p>=cut?pos:neg).push(`可逆性（PEF，無肺量計時）：PEF ↑ <b>${r1(p)}%</b>（標準 ≥${cut}%）`);
   }
-  if(!bdr)missing.push('可逆性（前後 FEV₁ 或 PEF）');
+  if(!bdr)missing.push(`可逆性（前後 FEV₁${kid?'':'、FVC'} 或 PEF）`);
   const pefCut=kid?13:10;
   if(o.pef!=null)(o.pef>pefCut?pos:neg).push(`PEF 2 週平均每日變異 <b>${o.pef}%</b>（標準 &gt;${pefCut}%）`);
   else missing.push('PEF 平均每日變異');
   other.forEach(i=>pos.push(DX_OTHER[i]));
-  const objPos=pos.length>0, tested=judged||o.pef!=null||other.length>0, fenoCut=kid?35:50, fenoHigh=o.feno!=null&&o.feno>fenoCut;
+  const objPos=pos.length>0, tested=judged||o.pef!=null||other.length>0, fenoCut=(age==='ad18'||age==='a1217')?50:35, fenoHigh=o.feno!=null&&o.feno>fenoCut;
   const feat=sx.filter(i=>i>0).length, typical=sx.includes(0)&&feat>=2;
   const key=objPos&&typical?'confirmed':objPos?'objOnly':typical&&tested?'sxOnly':typical&&fenoHigh?'sxT2':typical?'needTests':'insufficient';
   let ratioTxt=null;
@@ -1722,7 +1726,8 @@ function render(){
   else if(name==='年齡'){
     const opts = S.scenario==='dx'
       ? [{v:'ad18',b:'成人 ≥18 歲',e:'GINA Table 1 的成人診斷標準'},
-         {v:'ch617',b:'兒童／青少年 6–17 歲',e:'GINA Table 1 的兒童診斷標準（以 % 預測值判讀）'},
+         {v:'a1217',b:'青少年 12–17 歲',e:'GINA Table 1 的兒童標準（以 % 預測值判讀）；FeNO 門檻同成人'},
+         {v:'a611',b:'兒童 6–11 歲',e:'GINA Table 1 的兒童診斷標準（以 % 預測值判讀）'},
          {v:'a5',b:'幼兒 ≤5 歲',e:'無法做肺功能，屬臨床診斷'}]
       : S.scenario==='ac'
       ? [{v:'ad18',b:'成人 ≥18 歲',e:'Figure 9 成人劑量'},
@@ -1732,7 +1737,7 @@ function render(){
       : [{v:'a12',b:'成人／青少年 ≥12 歲',e:'Track 1 / Track 2、Step 1–5'},
          {v:'a611',b:'兒童 6–11 歲',e:'兒童專屬階梯與劑量'},
          {v:'a5',b:'幼兒 ≤5 歲',e:'取自 GINA 完整報告'}];
-    h=`<div class="q">病人年齡層？</div><div class="qh">${S.scenario==='dx'?'注意：GINA 的<b>診斷</b>標準以 18 歲分界，與<b>治療</b>階梯的 12 歲分界不同。':'GINA 依年齡分為三個獨立的治療流程。'}</div>`+h_opts(opts,'age','three');
+    h=`<div class="q">病人年齡層？</div><div class="qh">${S.scenario==='dx'?'注意：GINA 的<b>診斷</b>標準以 18 歲分界，與<b>治療</b>階梯的 12 歲分界不同；只有 FeNO 門檻把 12–17 歲歸在成人這一側。':'GINA 依年齡分為三個獨立的治療流程。'}</div>`+h_opts(opts,'age','three');
   }
 
   else if(name==='症狀型態'){
@@ -1749,7 +1754,7 @@ function render(){
           '對氣喘藥物有治療反應（低劑量 ICS 試驗 2–3 個月改善、停藥後惡化）'
         ],'dxClin');
     } else {
-      const isChild = S.age==='ch617';
+      const isChild = S.age!=='ad18';
       const field=(id,lab,ph,step)=>`<div class="field"><label for="i_${id}">${lab}</label><input type="number" step="${step}" id="i_${id}" placeholder="${ph}" value="${S.obj[id]??''}"></div>`;
       h=`<div class="q">輸入肺功能與生物標記數值</div><div class="qh">可只填有的項目。依 GINA 2026 Table 1（${isChild?'兒童 6–17 歲':'成人 ≥18 歲'}）判讀，<b>符合任一項</b>可變性證據即可。</div>
       <div class="grid2">
@@ -1760,7 +1765,7 @@ function render(){
           <p class="small muted" style="margin:8px 0 0">${isChild?'標準：FEV₁ ↑ ≥12% <b>預測值</b>':'標準：FEV₁ 或 FVC ↑ ≥12% <b>且</b> ≥200 mL'}　·　200–400 mcg salbutamol 前後 10–15 分鐘</p>
           <p class="small" style="margin:12px 0 8px">沒有肺量計時改用 PEF：</p>
           <div class="numrow">${field('pefPre','用藥前 PEF（L/min）','320','1')}${field('pefPost','用藥後 PEF（L/min）','400','1')}</div>
-          <p class="small muted" style="margin:8px 0 0">標準：PEF ↑ ${isChild?'≥15%':'≥20%'}；有 FEV₁ 時以 FEV₁ 為準</p>
+          <p class="small muted" style="margin:8px 0 0">標準：PEF ↑ ${isChild?'≥15%':'≥20%'}；有肺量計數值時以肺量計為準</p>
         </div>
         <div class="card pad">
           <p class="small" style="margin:0 0 10px"><b>2. PEF 2 週平均每日變異</b></p>
@@ -1770,7 +1775,7 @@ function render(){
         <div class="card pad">
           <p class="small" style="margin:0 0 10px"><b>3. FeNO（輔助，不是可變性證據）</b></p>
           <div class="numrow">${field('feno','FeNO（ppb）','45','1')}</div>
-          <p class="small muted" style="margin:8px 0 0">支持 Type 2：${isChild?'兒童 &gt;35 ppb':'成人與青少年 &gt;50 ppb'}；低值<b>不能排除</b>氣喘</p>
+          <p class="small muted" style="margin:8px 0 0">支持 Type 2：${S.age==='a611'?'兒童 &gt;35 ppb':'成人與青少年 &gt;50 ppb'}；低值<b>不能排除</b>氣喘</p>
         </div>
         <div class="card pad">
           <p class="small" style="margin:0 0 10px"><b>4. FEV₁/FVC（輔助）</b></p>
@@ -1892,7 +1897,7 @@ function bind(){
 function result(){ return S.scenario==='dx'?resDx() : S.scenario==='tx'?resTx() : resAcute(); }
 
 function resDx(){
-  const isChild=S.age==='ch617', isInfant=S.age==='a5';
+  const isInfant=S.age==='a5';
   let h='';
   if(isInfant){
     const n=S.dxClin.length;

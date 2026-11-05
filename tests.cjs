@@ -131,7 +131,8 @@ t('adult PEF BDR ≥20% (no spirometry)', dx({ obj: { pefPre: 300, pefPost: 360 
 t('adult PEF BDR 15% → negative', dx({ obj: { pefPre: 300, pefPost: 345 } }).key === 'sxOnly');
 t('FEV1 takes priority over PEF BDR', dx({ obj: { pre: 2, post: 2.1, pefPre: 300, pefPost: 400 } }).key === 'sxOnly');
 t('adult PEF variability >10%', dx({ obj: { pef: 14 } }).key === 'confirmed' && dx({ obj: { pef: 10 } }).key === 'sxOnly');
-const kid = (o) => dx(Object.assign({ age: 'ch617' }, o));
+const kid = (o) => dx(Object.assign({ age: 'a611' }, o));
+const teen = (o) => dx(Object.assign({ age: 'a1217' }, o));
 t('child 10% of predicted → negative even if 13% of baseline', kid({ obj: { pre: 1.5, post: 1.7, pred: 2 } }).key === 'sxOnly');
 t('child 12% of predicted → confirmed', kid({ obj: { pre: 1.5, post: 1.74, pred: 2 } }).key === 'confirmed');
 let dxr = kid({ obj: { pre: 1.5, post: 1.9 } });
@@ -142,6 +143,26 @@ t('low FEV1/FVC alone is not variability', dx({ obj: { ratio: 0.6 } }).key === '
 t('FeNO alone is not variability', dx({ obj: { feno: 60 } }).key === 'sxT2' && kid({ obj: { feno: 40 } }).key === 'sxT2' && dx({ obj: { feno: 40 } }).key === 'needTests');
 t('positive test without typical history', dx({ sx: [1], obj: { pef: 14 } }).key === 'objOnly');
 t('nothing entered', dx({ sx: [] }).key === 'insufficient');
+/* floating point: results that are exactly on a cutoff must pass */
+t('float: 2.5→2.8 L is exactly 12%', dx({ obj: { pre: 2.5, post: 2.8 } }).key === 'confirmed');
+t('float: FVC 2.5→2.8 L is exactly 12%', dx({ obj: { fvcPre: 2.5, fvcPost: 2.8 } }).key === 'confirmed');
+t('float: child exactly 12% of predicted', kid({ obj: { pre: 1.1, post: 1.34, pred: 2 } }).key === 'confirmed' && kid({ obj: { pre: 2.5, post: 2.8, pred: 2.5 } }).key === 'confirmed');
+t('float: PEF exactly on the cutoffs', dx({ obj: { pefPre: 350, pefPost: 420 } }).key === 'confirmed' && kid({ obj: { pefPre: 260, pefPost: 299 } }).key === 'confirmed');
+t('just under 12% stays negative', dx({ obj: { pre: 2.5, post: 2.79 } }).key === 'sxOnly');
+/* FVC-only BDR */
+t('adult FVC-only response counts', dx({ obj: { fvcPre: 3.5, fvcPost: 4 } }).key === 'confirmed');
+t('adult FVC-only ≥12% but <200 mL → negative', dx({ obj: { fvcPre: 1, fvcPost: 1.15 } }).key === 'sxOnly');
+t('adult FVC-only ≥200 mL but <12% → negative', dx({ obj: { fvcPre: 4, fvcPost: 4.3 } }).key === 'sxOnly');
+t('adult FVC-only is not reported as missing BDR', dx({ obj: { fvcPre: 3.5, fvcPost: 4 } }).missing.every(x => !x.includes('可逆性')));
+t('adult FVC takes priority over PEF BDR', dx({ obj: { fvcPre: 4, fvcPost: 4.1, pefPre: 300, pefPost: 400 } }).key === 'sxOnly');
+t('FVC does not count for ages 6–17', kid({ obj: { fvcPre: 3.5, fvcPost: 4 } }).key === 'needTests' && teen({ obj: { fvcPre: 3.5, fvcPost: 4 } }).key === 'needTests');
+/* FeNO cutoff: adults/adolescents >50, children >35; ages 12–17 otherwise follow the child rules */
+t('adolescent FeNO 40 not high, 50 not high, 60 high', teen({ obj: { feno: 40 } }).key === 'needTests' && teen({ obj: { feno: 50 } }).key === 'needTests' && teen({ obj: { feno: 60 } }).key === 'sxT2');
+t('child 6–11 FeNO 35 not high, 36 high', kid({ obj: { feno: 35 } }).key === 'needTests' && kid({ obj: { feno: 36 } }).key === 'sxT2');
+t('fenoCut per age', dx({}).fenoCut === 50 && teen({}).fenoCut === 50 && kid({}).fenoCut === 35);
+t('adolescent keeps child BDR rule', teen({ obj: { pre: 1.5, post: 1.74, pred: 2 } }).key === 'confirmed' && teen({ obj: { pre: 1.5, post: 1.7, pred: 2 } }).key === 'sxOnly' && teen({ obj: { pre: 1.5, post: 1.9 } }).ind.length === 1);
+t('adolescent keeps child PEF rules', teen({ obj: { pefPre: 200, pefPost: 230 } }).key === 'confirmed' && teen({ obj: { pef: 13 } }).key === 'sxOnly' && teen({ obj: { pef: 14 } }).key === 'confirmed');
+t('no ch617 left in the page', !html.includes('ch617'));
 t('out-of-range value ignored and flagged', dx({ obj: { pre: 2100, post: 2500 } }).bad.length === 2 && dx({ obj: { pre: 2100, post: 2500 } }).key === 'needTests');
 
 /* --- Figure 9 severity --- */
